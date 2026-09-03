@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${subject.name} + ' · StudyVault'">Subject · StudyVault</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <a th:href="@{/}" class="back-link">&larr; All subjects</a>
+        <h1 th:text="${subject.name}">Subject Name</h1>
+
+        <form th:action="@{/subjects/{id}/upload(id=${subject.id})}"
+              method="post" enctype="multipart/form-data" class="upload-form">
+            <input type="file" name="file" accept=".ppt,.pptx,.pdf" required />
+            <button type="submit">Upload</button>
+        </form>
+
+        <ul class="file-list">
+            <li th:each="file : ${files}">
+                <span th:text="${file.originalFileName}">filename.pptx</span>
+                <span class="date" th:text="${#temporals.format(file.uploadedAt, 'dd MMM yyyy, HH:mm')}">date</span>
+                <a th:href="@{/files/{id}/download(id=${file.id})}" class="download-btn">Download</a>
+            </li>
+        </ul>
+
+        <p th:if="${files.isEmpty()}" class="empty-msg">No files uploaded yet for this subject.</p>
+    </div>
+</body>
+</html>

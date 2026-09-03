@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>StudyVault</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <h1>📚 StudyVault</h1>
+        <p class="subtitle">Find every subject's PPTs and PDFs in one place.</p>
+
+        <form th:action="@{/subjects/add}" method="post" class="add-form">
+            <input type="text" name="name" placeholder="Add a new subject (e.g. DAA)" required />
+            <button type="submit">Add Subject</button>
+        </form>
+
+        <div class="subject-grid">
+            <a th:each="subject : ${subjects}"
+               th:href="@{/subjects/{id}(id=${subject.id})}"
+               class="subject-card">
+                <span th:text="${subject.name}">Subject Name</span>
+                <span class="file-count" th:text="${subject.files.size()} + ' files'">0 files</span>
+            </a>
+        </div>
+
+        <p th:if="${subjects.isEmpty()}" class="empty-msg">No subjects yet. Add your first one above.</p>
+    </div>
+</body>
+</html>
