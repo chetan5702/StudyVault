@@ -56,7 +56,7 @@ public class MaterialController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(material.getContentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, disposition("attachment", material))
-                .header(HttpHeaders.X_CONTENT_TYPE_OPTIONS, "nosniff")
+                .header("X-Content-Type-Options", "nosniff")
                 .body(material.getData());
     }
 
@@ -67,7 +67,7 @@ public class MaterialController {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(material.getContentType()))
                 .header(HttpHeaders.CONTENT_DISPOSITION, disposition("inline", material))
-                .header(HttpHeaders.X_CONTENT_TYPE_OPTIONS, "nosniff")
+                .header("X-Content-Type-Options", "nosniff")
                 .body(material.getData());
     }
 
