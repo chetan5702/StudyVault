@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('StudyVault')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: topbar(false, '')}"></header>
+
+<main class="container">
+
+    <section class="hero">
+        <h1>Find the slide, not the folder.</h1>
+        <p class="hero-note">Search runs over the text inside every PDF and deck you have uploaded.</p>
+        <form class="hero-search" th:action="@{/search}" method="get" role="search">
+            <label class="visually-hidden" for="hero-q">Search materials</label>
+            <input id="hero-q" type="search" name="q" autocomplete="off"
+                   placeholder="dynamic programming, normalisation, deadlock…">
+            <button type="submit">Search</button>
+        </form>
+    </section>
+
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <section class="panel">
+        <div class="panel-head">
+            <h2>Subjects</h2>
+            <form class="inline-form" th:action="@{/subjects}" method="post">
+                <label class="visually-hidden" for="subject-name">New subject</label>
+                <input id="subject-name" type="text" name="name" maxlength="120" required
+                       placeholder="Add a subject, e.g. DAA">
+                <button type="submit">Add subject</button>
+            </form>
+        </div>
+
+        <div class="subject-grid" th:if="${!cards.isEmpty()}">
+            <a th:each="card : ${cards}"
+               th:href="@{/subjects/{id}(id=${card.id})}"
+               class="subject-card"
+               th:classappend="|urgency-${card.urgency}|">
+                <span class="subject-name" th:text="${card.name}">Subject</span>
+                <span class="countdown" th:if="${card.countdownLabel != null}"
+                      th:text="${card.countdownLabel}">6 days left</span>
+                <span class="subject-meta">
+                    <span th:text="${card.fileCountLabel}">0 files</span>
+                    <span class="dot-sep" th:if="${card.fileCount gt 0}" th:text="${card.sizeLabel}">0 KB</span>
+                </span>
+            </a>
+        </div>
+
+        <p class="empty" th:if="${cards.isEmpty()}">
+            Nothing here yet. Add a subject above, then upload the slides you were sent on WhatsApp.
+        </p>
+    </section>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

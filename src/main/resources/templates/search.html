@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Search')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: topbar(true, ${query})}"></header>
+
+<main class="container">
+
+    <h1 class="page-title" th:if="${!results.isEmpty()}" th:text="${heading}">Matches</h1>
+
+    <ul class="result-list" th:if="${!results.isEmpty()}">
+        <li th:each="result : ${results}">
+            <a class="result-subject" th:href="@{/subjects/{id}(id=${result.subjectId})}"
+               th:text="${result.subjectName}">Subject</a>
+            <a class="result-name" th:href="@{/materials/{pid}/download(pid=${result.publicId})}"
+               th:text="${result.fileName}">lecture.pdf</a>
+            <p class="snippet" th:if="${result.matchedInsideDocument}">
+                <span th:text="${result.snippetBefore}">…text before </span><mark
+                    th:text="${result.snippetMatch}">match</mark><span
+                    th:text="${result.snippetAfter}"> text after…</span>
+            </p>
+            <p class="snippet snippet-empty" th:unless="${result.matchedInsideDocument}">
+                The filename matches this search.
+            </p>
+            <p class="file-meta">
+                <span th:text="${result.extension}">pdf</span>
+                <span th:text="${result.uploadedAtLabel}">4 Sep 2026</span>
+            </p>
+        </li>
+    </ul>
+
+    <p class="empty" th:if="${results.isEmpty() and #strings.length(query) ge 2}">
+        Nothing matched <span th:text="${query}">that</span>. Try a shorter phrase, or a term you
+        know appears on the slide.
+    </p>
+
+    <p class="empty" th:if="${#strings.length(query) lt 2}">
+        Type at least two characters to search across every subject.
+    </p>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

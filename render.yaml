@@ -1,0 +1,33 @@
+# Optional one-file deploy for Render. Check Render's current free-tier terms
+# before relying on it: free PostgreSQL instances have expired after 30 days.
+#
+# SPRING_DATASOURCE_URL is marked sync:false because Render exposes its
+# connection string in postgres://user:pass@host/db form, and the JDBC driver
+# needs jdbc:postgresql://host:port/db. Render prompts you for the value on
+# first deploy; copy it from the database's Connect panel and rewrite the
+# prefix by hand.
+services:
+  - type: web
+    name: studyvault
+    runtime: docker
+    plan: free
+    healthCheckPath: /login
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: studyvault-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: studyvault-db
+          property: password
+      - key: SV_ADMIN_PASSWORD
+        generateValue: true
+      - key: SV_STUDENT_PASSWORD
+        generateValue: true
+
+databases:
+  - name: studyvault-db
+    plan: free

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8">
+    <!-- Without this the whole site renders zoomed out on a phone, which is
+         where most of this app actually gets used. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title th:text="${pageTitle}">StudyVault</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+
+<header th:fragment="topbar(showSearch, query)" class="topbar">
+    <div class="topbar-inner">
+        <a class="brand" th:href="@{/}">StudyVault</a>
+
+        <form th:if="${showSearch}" class="topbar-search" th:action="@{/search}" method="get" role="search">
+            <label class="visually-hidden" for="topbar-q">Search materials</label>
+            <input id="topbar-q" type="search" name="q" th:value="${query}"
+                   placeholder="Search inside every file" autocomplete="off">
+            <button type="submit">Search</button>
+        </form>
+
+        <div class="account">
+            <span class="account-name" sec:authentication="name">student</span>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="link-button">Sign out</button>
+            </form>
+        </div>
+    </div>
+</header>
+
+<div th:fragment="flash" class="flash-area">
+    <p class="flash flash-notice" th:if="${notice}" th:text="${notice}" role="status">Saved.</p>
+    <p class="flash flash-error" th:if="${error}" th:text="${error}" role="alert">Something went wrong.</p>
+</div>
+
+<footer th:fragment="footer" class="footer">
+    <p>StudyVault keeps every file inside the database, so nothing is lost when the server restarts.</p>
+</footer>
+
+</body>
+</html>

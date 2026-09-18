@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('StudyVault')}"></head>
+<body>
+<main class="container">
+    <h1 class="page-title">That request did not go through</h1>
+    <p class="empty">
+        <span th:if="${status}" th:text="${status}">500</span>
+        Try again, or head back to <a th:href="@{/}">all subjects</a>.
+    </p>
+</main>
+</body>
+</html>

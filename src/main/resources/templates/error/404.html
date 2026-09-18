@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Not found')}"></head>
+<body>
+<main class="container">
+    <h1 class="page-title">That page is not here</h1>
+    <p class="empty">The subject or file may have been deleted. Head back to
+        <a th:href="@{/}">all subjects</a>.</p>
+</main>
+</body>
+</html>

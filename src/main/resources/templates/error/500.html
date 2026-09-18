@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Something broke')}"></head>
+<body>
+<main class="container">
+    <h1 class="page-title">Something broke on our side</h1>
+    <p class="empty">The action did not complete. Try again, and if it keeps happening check the
+        server logs. Back to <a th:href="@{/}">all subjects</a>.</p>
+</main>
+</body>
+</html>

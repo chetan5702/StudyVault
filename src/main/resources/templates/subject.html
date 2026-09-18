@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/layout :: head(${subject.name})}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: topbar(true, '')}"></header>
+
+<main class="container">
+
+    <a class="back" th:href="@{/}">All subjects</a>
+
+    <div class="subject-header">
+        <h1 th:text="${subject.name}">Subject</h1>
+        <span class="countdown countdown-large" th:if="${countdown != null}"
+              th:classappend="|urgency-${urgency}|" th:text="${countdown}">6 days left</span>
+    </div>
+
+    <div th:replace="~{fragments/layout :: flash}"></div>
+
+    <section class="panel">
+        <h2>Add a file</h2>
+        <form class="upload-form" th:action="@{/subjects/{id}/materials(id=${subject.id})}"
+              method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".pdf,.ppt,.pptx,.doc,.docx" required>
+            <button type="submit">Upload</button>
+        </form>
+        <p class="field-note">PDF, PPT, PPTX, DOC or DOCX, up to 25 MB. Uploading the same file twice
+            is detected and skipped.</p>
+    </section>
+
+    <section class="panel">
+        <div class="panel-head">
+            <h2>Files</h2>
+            <a class="button-quiet" th:if="${!materials.isEmpty()}"
+               th:href="@{/subjects/{id}/archive(id=${subject.id})}">Download all as zip</a>
+        </div>
+
+        <ul class="file-list" th:if="${!materials.isEmpty()}">
+            <li th:each="material : ${materials}">
+                <div class="file-main">
+                    <span class="badge" th:text="${material.extension}">pdf</span>
+                    <span class="file-name" th:text="${material.fileName}">lecture.pdf</span>
+                </div>
+                <p class="file-meta">
+                    <span th:text="${material.sizeLabel}">2.4 MB</span>
+                    <span th:text="|added by ${material.uploadedBy}|">added by student</span>
+                    <span th:text="${material.uploadedAtLabel}">4 Sep 2026, 19:20</span>
+                    <span th:if="${material.downloadCount gt 0}"
+                          th:text="|${material.downloadCount} downloads|">12 downloads</span>
+                </p>
+                <div class="file-actions">
+                    <a th:if="${material.previewable}" class="button-quiet"
+                       th:href="@{/materials/{pid}/view(pid=${material.publicId})}" target="_blank"
+                       rel="noopener">Open</a>
+                    <a class="button-quiet"
+                       th:href="@{/materials/{pid}/download(pid=${material.publicId})}">Download</a>
+                    <form sec:authorize="hasRole('ADMIN')" method="post"
+                          th:action="@{/materials/{pid}/delete(pid=${material.publicId})}">
+                        <input type="hidden" name="subjectId" th:value="${subject.id}">
+                        <button type="submit" class="link-button danger">Delete</button>
+                    </form>
+                </div>
+                <details th:if="${material.previewable}" class="preview">
+                    <summary>Preview</summary>
+                    <iframe th:src="@{/materials/{pid}/view(pid=${material.publicId})}"
+                            title="Document preview" loading="lazy"></iframe>
+                </details>
+            </li>
+        </ul>
+
+        <p class="empty" th:if="${materials.isEmpty()}">
+            No files yet. Upload the first deck and it becomes searchable straight away.
+        </p>
+    </section>
+
+    <section class="panel">
+        <h2>Exam date</h2>
+        <form class="inline-form" th:action="@{/subjects/{id}/exam-date(id=${subject.id})}" method="post">
+            <label class="visually-hidden" for="exam-date">Exam date</label>
+            <input id="exam-date" type="date" name="examDate" th:value="${subject.examDate}">
+            <button type="submit">Save date</button>
+        </form>
+        <p class="field-note">Subjects with the nearest exam move to the top of the home page. Leave
+            the field empty and save to clear it.</p>
+    </section>
+
+    <section class="panel danger-zone" sec:authorize="hasRole('ADMIN')">
+        <h2>Delete this subject</h2>
+        <p class="field-note">This removes the subject and every file inside it. It cannot be undone.</p>
+        <form th:action="@{/subjects/{id}/delete(id=${subject.id})}" method="post">
+            <button type="submit" class="button-danger">Delete subject</button>
+        </form>
+    </section>
+
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>
