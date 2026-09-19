@@ -34,7 +34,10 @@ public class Subject {
     @Column(name = "exam_date")
     private LocalDate examDate;
 
-    @Column(name = "created_at", nullable = false)
+    // This is intentionally nullable at the database level. Existing StudyVault
+    // databases predate this column; Hibernate can then add it without rejecting
+    // already-stored subjects. New subjects still receive a timestamp below.
+    @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
     protected Subject() {
