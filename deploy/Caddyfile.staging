@@ -1,0 +1,13 @@
+# Local HTTP only. NEVER expose this staging gateway to the public internet.
+:80 {
+    encode gzip
+    handle /api/* {
+        reverse_proxy api:8000 {
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+    handle {
+        reverse_proxy web:8080
+    }
+}
