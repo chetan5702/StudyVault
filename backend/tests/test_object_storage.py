@@ -1,5 +1,4 @@
 """Focused tests for the optional private object-storage adapter."""
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
