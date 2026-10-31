@@ -2,7 +2,8 @@ FROM python:3.12-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    UPLOAD_DIR=/srv/data/uploads
 WORKDIR /srv/studyvault/backend
 COPY requirements-prod.txt ./requirements-prod.txt
 RUN pip install --no-cache-dir -r requirements-prod.txt \
