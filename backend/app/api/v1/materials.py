@@ -1,7 +1,6 @@
 from pathlib import PurePosixPath
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
 from sqlalchemy import and_, case, delete, func, or_, update
 from sqlalchemy.dialects.postgresql import insert as postgresql_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
@@ -12,7 +11,8 @@ from app.config import get_settings
 from app.database import get_db
 from app.models import ClassMember, Material, Subject, Unit, User, UserStorageUsage
 from app.schemas import MaterialCreate, MaterialOut
-from app.storage import get_file_path, save_upload
+from app.storage import save_upload
+from app.object_storage import upload_validated_file, download_stored_file, delete_stored_file
 
 router = APIRouter(tags=["materials"])
 
@@ -170,11 +170,14 @@ def upload_material(
     filename = "".join(c for c in filename if ord(c) >= 32)[:200] or key
     try:
         reserve_storage(db, current_user.id, size)
+        persisted_key = upload_validated_file(
+            path, f"{current_user.id}/{key}", mime
+        ) if get_settings().storage_backend == "s3" else key
         material = Material(
             user_id=current_user.id,
             **payload.model_dump(),
             file_name=filename,
-            storage_key=key,
+            storage_key=persisted_key,
             mime_type=mime,
             size_bytes=size,
         )
@@ -182,10 +185,14 @@ def upload_material(
         db.flush()
         db.refresh(material)
         db.commit()
+        if persisted_key.startswith('s3:'):
+            path.unlink(missing_ok=True)
         return material
     except BaseException:
         db.rollback()
         path.unlink(missing_ok=True)
+        if 'persisted_key' in locals() and persisted_key.startswith('s3:'):
+            delete_stored_file(persisted_key)
         raise
 
 
@@ -205,19 +212,7 @@ def download_material(
     db: Session = Depends(get_db),
 ):
     material = accessible(db, current_user, material_id)
-    path = get_file_path(material.storage_key)
-    if not path.is_file():
-        raise HTTPException(404, "Stored file not found")
-    return FileResponse(
-        path,
-        filename=material.file_name,
-        media_type=material.mime_type,
-        headers={
-            "X-Content-Type-Options": "nosniff",
-            "Cache-Control": "private, no-store",
-        },
-    )
-
+    return download_stored_file(material.storage_key, material.file_name, material.mime_type)
 
 @router.delete("/materials/{material_id}")
 def delete_material(
@@ -241,6 +236,5 @@ def delete_material(
         db.rollback()
         raise
 
-    path = get_file_path(storage_key)
-    path.unlink(missing_ok=True)
+    delete_stored_file(storage_key)
     return {"status": "deleted"}
