@@ -1,0 +1,94 @@
+# Render Blueprint for StudyVault. Review billing, domains, email, and backups before applying.
+# This is infrastructure configuration only; committing this file does not deploy services.
+services:
+  - type: web
+    name: studyvault-api
+    runtime: docker
+    plan: starter
+    region: singapore
+    repo: https://github.com/chetan5702/StudyVault
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    preDeployCommand: alembic upgrade head
+    healthCheckPath: /ready
+    disk:
+      name: studyvault-uploads
+      mountPath: /srv/data/uploads
+      sizeGB: 5
+    envVars: &studyvault_env
+      - key: ENVIRONMENT
+        value: production
+      - key: STUDYVAULT_DEBUG
+        value: "false"
+      - key: SEED_DEMO
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: studyvault-postgres
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: UPLOAD_DIR
+        value: /srv/data/uploads
+      - key: PUBLIC_FRONTEND_URL
+        value: https://studyvault-frontend.vercel.app
+      - key: CORS_ORIGINS
+        value: https://studyvault-frontend.vercel.app
+      - key: REQUIRE_EMAIL_VERIFICATION
+        value: "true"
+      - key: PUBLIC_AUTH_LIMIT_ENABLED
+        value: "true"
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+  - type: worker
+    name: studyvault-reminders
+    runtime: docker
+    plan: starter
+    region: singapore
+    repo: https://github.com/chetan5702/StudyVault
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: python -m app.reminder_worker --interval 30
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: STUDYVAULT_DEBUG
+        value: "false"
+      - key: SEED_DEMO
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: studyvault-postgres
+          property: connectionString
+      # Copy the API's generated SECRET_KEY into this worker's env before use.
+      - key: SECRET_KEY
+        sync: false
+      - key: PUBLIC_FRONTEND_URL
+        value: https://studyvault-frontend.vercel.app
+      - key: CORS_ORIGINS
+        value: https://studyvault-frontend.vercel.app
+      - key: REQUIRE_EMAIL_VERIFICATION
+        value: "true"
+      - key: PUBLIC_AUTH_LIMIT_ENABLED
+        value: "true"
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+databases:
+  - name: studyvault-postgres
+    databaseName: studyvault
+    user: studyvault
+    region: singapore
+    plan: basic-256mb
+    postgresMajorVersion: "16"
