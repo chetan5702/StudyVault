@@ -60,5 +60,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: cp .env.production.example .env.production
       - run: docker compose --env-file .env.production.example -f compose.prod.yml config --quiet
       - run: docker compose --env-file .env.production.example -f compose.prod.yml build
