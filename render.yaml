@@ -1,10 +1,12 @@
 # Render Blueprint for StudyVault. Review billing, domains, email, and backups before applying.
-# This is infrastructure configuration only; committing this file does not deploy services.
+# This is paid infrastructure configuration only; committing this file does not deploy services.
+# Review the estimated recurring charges on Render before approving Blueprint creation.
+# The existing legacy service named StudyVault is deliberately left unchanged.
 services:
   - type: web
     name: studyvault-api
     runtime: docker
-    plan: starter
+    plan: 0.5c-512mb
     region: singapore
     repo: https://github.com/chetan5702/StudyVault
     branch: main
@@ -16,7 +18,7 @@ services:
       name: studyvault-uploads
       mountPath: /srv/data/uploads
       sizeGB: 5
-    envVars: &studyvault_env
+    envVars:
       - key: ENVIRONMENT
         value: production
       - key: STUDYVAULT_DEBUG
@@ -49,7 +51,7 @@ services:
   - type: worker
     name: studyvault-reminders
     runtime: docker
-    plan: starter
+    plan: 0.5c-512mb
     region: singapore
     repo: https://github.com/chetan5702/StudyVault
     branch: main
@@ -67,9 +69,11 @@ services:
         fromDatabase:
           name: studyvault-postgres
           property: connectionString
-      # Copy the API's generated SECRET_KEY into this worker's env before use.
       - key: SECRET_KEY
-        sync: false
+        fromService:
+          type: web
+          name: studyvault-api
+          envVarKey: SECRET_KEY
       - key: PUBLIC_FRONTEND_URL
         value: https://studyvault-frontend.vercel.app
       - key: CORS_ORIGINS
@@ -81,9 +85,15 @@ services:
       - key: EMAIL_PROVIDER
         value: resend
       - key: RESEND_API_KEY
-        sync: false
+        fromService:
+          type: web
+          name: studyvault-api
+          envVarKey: RESEND_API_KEY
       - key: EMAIL_FROM
-        sync: false
+        fromService:
+          type: web
+          name: studyvault-api
+          envVarKey: EMAIL_FROM
 
 databases:
   - name: studyvault-postgres
