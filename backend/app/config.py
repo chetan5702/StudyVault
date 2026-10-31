@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     algorithm: Literal["HS256"] = "HS256"
     access_token_expire_minutes: int = Field(default=60 * 24, gt=0)
     upload_dir: str = "./uploads"
+    storage_backend: Literal["local", "s3"] = "local"
+    s3_endpoint_url: str = ""
+    s3_region: str = "auto"
+    s3_bucket: str = ""
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
     max_upload_size_bytes: int = Field(default=20 * 1024 * 1024, gt=0)
     max_user_storage_bytes: int = Field(default=1024 * 1024 * 1024, gt=0)
     login_max_failures: int = Field(default=5, gt=0)
@@ -55,6 +61,13 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def secure_configuration(self):
+        if self.storage_backend == "s3" and not all((
+            self.s3_endpoint_url.startswith("https://"),
+            self.s3_bucket,
+            self.aws_access_key_id,
+            self.aws_secret_access_key,
+        )):
+            raise ValueError("S3 storage requires HTTPS endpoint, bucket and credentials")
         if self.environment == "production":
             if not self.require_email_verification:
                 raise ValueError("Production requires email verification")
