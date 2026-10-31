@@ -41,8 +41,9 @@ class Settings(BaseSettings):
     password_reset_token_expire_minutes: int = Field(default=60, gt=0)
     verification_resend_cooldown_seconds: int = Field(default=60, gt=0)
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
-    email_provider: Literal["disabled", "resend", "file"] = "disabled"
+    email_provider: Literal["disabled", "resend", "brevo", "file"] = "disabled"
     resend_api_key: str = ""
+    brevo_api_key: str = ""
     email_from: str = ""
     email_sink_dir: str = "./email-sink"
 
@@ -71,7 +72,10 @@ class Settings(BaseSettings):
         if self.environment == "production":
             if not self.require_email_verification:
                 raise ValueError("Production requires email verification")
-            if self.email_provider != "resend" or not self.resend_api_key or not self.email_from:
+            if not self.email_from or not (
+                (self.email_provider == "resend" and self.resend_api_key)
+                or (self.email_provider == "brevo" and self.brevo_api_key)
+            ):
                 raise ValueError("Production requires a configured non-file email provider")
             frontend = urlparse(self.public_frontend_url)
             if (
@@ -99,9 +103,9 @@ class Settings(BaseSettings):
 
     @property
     def email_available(self) -> bool:
-        return self.email_provider == "file" or (
-            self.email_provider == "resend" and bool(self.resend_api_key and self.email_from)
-        )
+        return (self.email_provider == "file" or
+                (self.email_provider == "resend" and bool(self.resend_api_key and self.email_from)) or
+                (self.email_provider == "brevo" and bool(self.brevo_api_key and self.email_from)))
 
     @property
     def cors_origins_list(self) -> list[str]:
