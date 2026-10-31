@@ -1,3 +1,4 @@
+import logging
 from pathlib import PurePosixPath
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -14,6 +15,7 @@ from app.object_storage import delete_stored_file, download_stored_file, upload_
 from app.schemas import MaterialCreate, MaterialOut
 from app.storage import save_upload
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["materials"])
 
 
@@ -168,11 +170,16 @@ def upload_material(
     path, key, mime, size = save_upload(file)
     filename = PurePosixPath((file.filename or key).replace("\\", "/")).name
     filename = "".join(c for c in filename if ord(c) >= 32)[:200] or key
+    remote_upload = get_settings().storage_backend == "s3"
+    persisted_key = None
+    committed = False
     try:
         reserve_storage(db, current_user.id, size)
-        persisted_key = upload_validated_file(
-            path, f"{current_user.id}/{key}", mime
-        ) if get_settings().storage_backend == "s3" else key
+        persisted_key = (
+            upload_validated_file(path, f"{current_user.id}/{key}", mime)
+            if remote_upload
+            else key
+        )
         material = Material(
             user_id=current_user.id,
             **payload.model_dump(),
@@ -185,15 +192,23 @@ def upload_material(
         db.flush()
         db.refresh(material)
         db.commit()
-        if persisted_key.startswith('s3:'):
-            path.unlink(missing_ok=True)
-        return material
-    except BaseException:
+        committed = True
+    except Exception:
         db.rollback()
-        path.unlink(missing_ok=True)
-        if 'persisted_key' in locals() and persisted_key.startswith('s3:'):
-            delete_stored_file(persisted_key)
+        if persisted_key is not None and persisted_key.startswith("s3:") and not committed:
+            try:
+                delete_stored_file(persisted_key)
+            except Exception:
+                logger.exception("Failed to clean up an uncommitted uploaded object")
         raise
+    finally:
+        if remote_upload or not committed:
+            try:
+                path.unlink(missing_ok=True)
+            except OSError:
+                logger.exception("Failed to remove temporary upload")
+
+    return material
 
 
 @router.get("/materials/{material_id}", response_model=MaterialOut)
