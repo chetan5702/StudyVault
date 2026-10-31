@@ -59,8 +59,7 @@ def test_s3_delete_is_private(monkeypatch):
     client.delete_object.assert_called_once_with(Bucket="private", Key="user/test.pdf")
 
 
-@pytest.mark.anyio
-async def test_private_s3_download_streams_and_closes(monkeypatch):
+def test_private_s3_download_streams_and_closes(monkeypatch):
     from app import object_storage
 
     closed = []
@@ -77,8 +76,12 @@ async def test_private_s3_download_streams_and_closes(monkeypatch):
     response = object_storage.download_stored_file(
         "s3:user/document.pdf", "report.pdf", "application/pdf"
     )
-    chunks = [chunk async for chunk in response.body_iterator]
-    assert b"".join(chunks) == b"safe-content"
+    import asyncio
+
+    async def consume():
+        return b"".join([chunk async for chunk in response.body_iterator])
+
+    assert asyncio.run(consume()) == b"safe-content"
     assert closed == [True]
     assert response.headers["cache-control"] == "private, no-store"
     assert response.headers["x-content-type-options"] == "nosniff"
