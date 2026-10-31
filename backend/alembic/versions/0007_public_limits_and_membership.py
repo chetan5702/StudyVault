@@ -4,6 +4,7 @@ Existing duplicates are deduplicated deterministically: an owner record is
 retained when present; otherwise the earliest membership is retained.
 """
 import sqlalchemy as sa
+
 from alembic import op
 
 revision = "0007_public_limits_and_membership"
