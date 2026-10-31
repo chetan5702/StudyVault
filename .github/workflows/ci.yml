@@ -18,6 +18,46 @@ jobs:
       - run: python -m pytest -q
       - run: python -m ruff check app tools tests alembic
 
+  postgres_migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: studyvault_ci
+          POSTGRES_USER: studyvault
+          POSTGRES_PASSWORD: studyvault_ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U studyvault -d studyvault_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      ENVIRONMENT: test
+      DATABASE_URL: postgresql+psycopg://studyvault:studyvault_ci_only@localhost:5432/studyvault_ci
+      STORAGE_BACKEND: local
+      SEED_DEMO: "false"
+      STUDYVAULT_DEBUG: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r requirements.txt
+      - name: Run all Alembic migrations on PostgreSQL 16
+        run: python -m alembic upgrade head
+      - name: Validate migration revision and database readiness
+        run: |
+          python -m alembic check
+          python -c "from fastapi.testclient import TestClient; from app.main import app; client=TestClient(app); response=client.get('/ready'); assert response.status_code == 200, response.text; assert response.json()['status'] == 'ready'"
+      - name: Confirm idempotent migration execution
+        run: python -m alembic upgrade head
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
