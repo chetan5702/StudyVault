@@ -5,7 +5,7 @@ from functools import lru_cache
 from typing import Literal
 from urllib.parse import urlparse
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -41,6 +41,17 @@ class Settings(BaseSettings):
     email_sink_dir: str = "./email-sink"
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False, populate_by_name=True)
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_postgres_driver(cls, value):
+        """Render supplies postgresql://; the application uses psycopg v3."""
+        if isinstance(value, str):
+            if value.startswith("postgres://"):
+                return "postgresql+psycopg://" + value[len("postgres://"):]
+            if value.startswith("postgresql://"):
+                return "postgresql+psycopg://" + value[len("postgresql://"):]
+        return value
 
     @model_validator(mode="after")
     def secure_configuration(self):
