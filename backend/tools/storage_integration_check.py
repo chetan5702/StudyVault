@@ -41,6 +41,14 @@ def run_probe() -> dict[str, bool]:
         "missing_after_delete": False,
     }
     try:
+        client.put_object(
+            Bucket=bucket,
+            Key=key,
+            Body=expected,
+            ContentType="text/plain",
+        )
+        result["upload"] = True
+
         public_url = (
             settings.s3_endpoint_url.rstrip("/")
             + "/"
@@ -54,13 +62,6 @@ def run_probe() -> dict[str, bool]:
         except HTTPError as exc:
             result["private_anonymous_read_denied"] = exc.code == 403
 
-        client.put_object(
-            Bucket=bucket,
-            Key=key,
-            Body=expected,
-            ContentType="text/plain",
-        )
-        result["upload"] = True
 
         response = client.get_object(Bucket=bucket, Key=key)
         try:
