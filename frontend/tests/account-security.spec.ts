@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const user = { id: 'verified-user', email: 'student@example.com', full_name: 'Student User' }
+const user = { id: 'verified-user', email: 'student@aiml.suh.edu.in', full_name: 'Student User' }
 
 test('registration and login handle verification-required responses', async ({ page }) => {
   await page.route('**/api/v1/auth/register', route => route.fulfill({
