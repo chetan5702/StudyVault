@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     def valid_registration_domain(cls, value: str) -> str:
         domain = value.strip().lower().rstrip(".")
         # Empty is allowed in isolated development/tests, never in production.
-        if domain and not re.fullmatch(r"[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?(?:\\.[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)+", domain):
+        if domain and not re.fullmatch(r"[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)+", domain):
             raise ValueError("REGISTRATION_EMAIL_DOMAIN must be a valid DNS domain")
         return domain
 
