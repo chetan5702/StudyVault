@@ -41,6 +41,7 @@ jobs:
       ENVIRONMENT: test
       DATABASE_URL: postgresql+psycopg://studyvault:studyvault_ci_only@localhost:5432/studyvault_ci
       STORAGE_BACKEND: local
+      REGISTRATION_EMAIL_DOMAIN: ""
       SEED_DEMO: "false"
       STUDYVAULT_DEBUG: "false"
     steps:
