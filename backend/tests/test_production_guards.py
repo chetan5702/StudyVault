@@ -48,6 +48,7 @@ def test_production_disallows_public_limit_bypass():
     with pytest.raises(ValueError, match='public authentication rate limiting'):
         Settings(
             environment='production',
+            registration_email_domain='suh.edu.in',
             secret_key='unique-source-of-random-data-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
             require_email_verification=True,
             public_frontend_url='https://studyvault.example',
