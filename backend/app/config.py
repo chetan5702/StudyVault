@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import secrets
 from functools import lru_cache
+import re
 from typing import Literal
 from urllib.parse import urlparse
 
@@ -36,6 +37,8 @@ class Settings(BaseSettings):
     login_failure_window_seconds: int = Field(default=15 * 60, gt=0)
     login_lockout_seconds: int = Field(default=15 * 60, gt=0)
     require_email_verification: bool = False
+    # New registrations only. Existing accounts are never reclassified or deleted.
+    registration_email_domain: str = "suh.edu.in"
     public_frontend_url: str = "http://localhost:5173"
     email_verification_token_expire_minutes: int = Field(default=24 * 60, gt=0)
     password_reset_token_expire_minutes: int = Field(default=60, gt=0)
@@ -60,6 +63,15 @@ class Settings(BaseSettings):
                 return "postgresql+psycopg://" + value[len("postgresql://"):]
         return value
 
+    @field_validator("registration_email_domain")
+    @classmethod
+    def valid_registration_domain(cls, value: str) -> str:
+        domain = value.strip().lower().rstrip(".")
+        # Empty is allowed in isolated development/tests, never in production.
+        if domain and not re.fullmatch(r"[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?(?:\\.[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)+", domain):
+            raise ValueError("REGISTRATION_EMAIL_DOMAIN must be a valid DNS domain")
+        return domain
+
     @model_validator(mode="after")
     def secure_configuration(self):
         if self.storage_backend == "s3" and not all((
@@ -70,6 +82,8 @@ class Settings(BaseSettings):
         )):
             raise ValueError("S3 storage requires HTTPS endpoint, bucket and credentials")
         if self.environment == "production":
+            if not self.registration_email_domain:
+                raise ValueError("Production requires a university registration email domain")
             if not self.require_email_verification:
                 raise ValueError("Production requires email verification")
             if not self.email_from or not (
