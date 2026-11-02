@@ -5,6 +5,8 @@ from datetime import datetime
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from app.config import get_settings
+
 from pydantic import (
     AwareDatetime,
     BaseModel,
@@ -108,6 +110,20 @@ class UserRegister(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=72)
     phone_number: str | None = Field(default=None, max_length=25)
+
+    @field_validator("email")
+    @classmethod
+    def valid_university_registration_email(cls, value: EmailStr) -> EmailStr:
+        # Validate only registration payloads. Login, password reset and existing
+        # accounts are unaffected, including previously created Gmail accounts.
+        university_domain = get_settings().registration_email_domain
+        if university_domain:
+            email_domain = str(value).rsplit("@", 1)[1].casefold()
+            if email_domain != university_domain and not email_domain.endswith("." + university_domain):
+                raise ValueError(
+                    f"Register using your university email (@{university_domain} or a department subdomain)."
+                )
+        return value
 
     @field_validator("full_name")
     @classmethod
