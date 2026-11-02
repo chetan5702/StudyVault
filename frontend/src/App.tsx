@@ -37,13 +37,19 @@ function AuthPage({ register = false }: { register?: boolean }) {
   return <main className="auth-layout"><div className="auth-story"><Link to="/" className="brand"><Icon name="vault" size={25} />StudyVault</Link><p className="eyebrow">YOUR ACADEMIC HOME</p><h1>A little more organized.<br />A lot more prepared.</h1><p>Keep your subjects, study materials and upcoming exams together in one private workspace.</p><div className="story-note">Built for the next chapter of your studies.</div></div><div className="auth-card"><p className="eyebrow">LET’S GET STARTED</p><h2>{register ? 'Create your account' : 'Welcome back'}</h2><p className="muted">{register ? 'Make room for a more focused semester.' : 'Your study space is ready when you are.'}</p><AsyncForm label={register ? 'Create account' : 'Log in'} onSubmit={async data => {
     const registration = register ? { full_name: data.get('name'), phone_number: String(data.get('phone_number') || '').trim() || null } : {}
     const email = String(data.get('email') || '').trim()
+    if (register) {
+      const emailDomain = email.split('@').pop()?.toLowerCase() || ''
+      if (emailDomain !== 'suh.edu.in' && !emailDomain.endsWith('.suh.edu.in')) {
+        throw new Error('Use your official SUH university email (such as student@aiml.suh.edu.in, student@cse.suh.edu.in or student@ds.suh.edu.in).')
+      }
+    }
     const result = await post<AuthResult>(`/auth/${register ? 'register' : 'login'}`, { email, password: data.get('password'), ...registration })
     if (result.verification_required || !result.access_token) {
       navigate(`/check-email?email=${encodeURIComponent(email)}`, { replace: true })
       return
     }
     auth.login(result); navigate(register ? '/profile' : '/')
-  }}>{register && <><Field label="Full name"><input name="name" autoComplete="name" required maxLength={120} /></Field><PhoneField helpId="registration-phone-help" /></>}<Field label="Email address"><input name="email" type="email" autoComplete="email" required /></Field><Field label="Password"><input name="password" type="password" autoComplete={register ? 'new-password' : 'current-password'} required minLength={register ? 8 : undefined} maxLength={72} /></Field>{register && <p className="muted text-sm">Use at least 8 characters, up to 72 UTF-8 bytes.</p>}</AsyncForm>{!register && <p className="auth-secondary-link"><Link to="/forgot-password">Forgot your password?</Link></p>}<p className="auth-switch">{register ? 'Already have an account?' : 'New to StudyVault?'} <Link to={register ? '/login' : '/register'}>{register ? 'Log in' : 'Create an account'}</Link></p></div></main>
+  }}>{register && <><Field label="Full name"><input name="name" autoComplete="name" required maxLength={120} /></Field><PhoneField helpId="registration-phone-help" /></>}<Field label={register ? "University email address" : "Email address"}><input name="email" type="email" autoComplete="email" placeholder={register ? "student@aiml.suh.edu.in" : undefined} required /></Field>{register && <p className="muted text-sm">New accounts require an official SUH email: @suh.edu.in or a department address such as @aiml.suh.edu.in, @cse.suh.edu.in or @ds.suh.edu.in. Verify the email link to activate your account. Existing accounts can still log in.</p>}<Field label="Password"><input name="password" type="password" autoComplete={register ? 'new-password' : 'current-password'} required minLength={register ? 8 : undefined} maxLength={72} /></Field>{register && <p className="muted text-sm">Use at least 8 characters, up to 72 UTF-8 bytes.</p>}</AsyncForm>{!register && <p className="auth-secondary-link"><Link to="/forgot-password">Forgot your password?</Link></p>}<p className="auth-switch">{register ? 'Already have an account?' : 'New to StudyVault?'} <Link to={register ? '/login' : '/register'}>{register ? 'Log in' : 'Create an account'}</Link></p></div></main>
 }
 
 function PhoneField({ defaultValue = '', helpId }: { defaultValue?: string; helpId: string }) {
