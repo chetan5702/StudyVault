@@ -222,6 +222,7 @@ def test_password_reset_request_stays_generic_when_background_delivery_fails(
 def test_production_requires_verified_email_provider_and_https_frontend():
     secure = {
         "environment": "production",
+        "registration_email_domain": "suh.edu.in",
         "secret_key": "secure-production-secret-4f7a93c8b2e165d0",
         "require_email_verification": True,
         "email_provider": "resend",

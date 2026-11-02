@@ -13,7 +13,7 @@ function pdfBuffer() {
 }
 
 test('complete student workflow and second-account private isolation', async ({ page }, testInfo) => {
-  const email = `browser-${Date.now()}@example.com`
+  const email = `browser-${Date.now()}@cse.suh.edu.in`
   const password = 'Password123!'
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))

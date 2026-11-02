@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import secrets
 from functools import lru_cache
 from typing import Literal
@@ -20,6 +21,12 @@ class Settings(BaseSettings):
     algorithm: Literal["HS256"] = "HS256"
     access_token_expire_minutes: int = Field(default=60 * 24, gt=0)
     upload_dir: str = "./uploads"
+    storage_backend: Literal["local", "s3"] = "local"
+    s3_endpoint_url: str = ""
+    s3_region: str = "auto"
+    s3_bucket: str = ""
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
     max_upload_size_bytes: int = Field(default=20 * 1024 * 1024, gt=0)
     max_user_storage_bytes: int = Field(default=1024 * 1024 * 1024, gt=0)
     login_max_failures: int = Field(default=5, gt=0)
@@ -30,13 +37,16 @@ class Settings(BaseSettings):
     login_failure_window_seconds: int = Field(default=15 * 60, gt=0)
     login_lockout_seconds: int = Field(default=15 * 60, gt=0)
     require_email_verification: bool = False
+    # New registrations only. Existing accounts are never reclassified or deleted.
+    registration_email_domain: str = "suh.edu.in"
     public_frontend_url: str = "http://localhost:5173"
     email_verification_token_expire_minutes: int = Field(default=24 * 60, gt=0)
     password_reset_token_expire_minutes: int = Field(default=60, gt=0)
     verification_resend_cooldown_seconds: int = Field(default=60, gt=0)
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
-    email_provider: Literal["disabled", "resend", "file"] = "disabled"
+    email_provider: Literal["disabled", "resend", "brevo", "file"] = "disabled"
     resend_api_key: str = ""
+    brevo_api_key: str = ""
     email_from: str = ""
     email_sink_dir: str = "./email-sink"
 
@@ -53,12 +63,33 @@ class Settings(BaseSettings):
                 return "postgresql+psycopg://" + value[len("postgresql://"):]
         return value
 
+    @field_validator("registration_email_domain")
+    @classmethod
+    def valid_registration_domain(cls, value: str) -> str:
+        domain = value.strip().lower().rstrip(".")
+        # Empty is allowed in isolated development/tests, never in production.
+        if domain and not re.fullmatch(r"[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?)+", domain):
+            raise ValueError("REGISTRATION_EMAIL_DOMAIN must be a valid DNS domain")
+        return domain
+
     @model_validator(mode="after")
     def secure_configuration(self):
+        if self.storage_backend == "s3" and not all((
+            self.s3_endpoint_url.startswith("https://"),
+            self.s3_bucket,
+            self.aws_access_key_id,
+            self.aws_secret_access_key,
+        )):
+            raise ValueError("S3 storage requires HTTPS endpoint, bucket and credentials")
         if self.environment == "production":
+            if not self.registration_email_domain:
+                raise ValueError("Production requires a university registration email domain")
             if not self.require_email_verification:
                 raise ValueError("Production requires email verification")
-            if self.email_provider != "resend" or not self.resend_api_key or not self.email_from:
+            if not self.email_from or not (
+                (self.email_provider == "resend" and self.resend_api_key)
+                or (self.email_provider == "brevo" and self.brevo_api_key)
+            ):
                 raise ValueError("Production requires a configured non-file email provider")
             frontend = urlparse(self.public_frontend_url)
             if (
@@ -86,9 +117,9 @@ class Settings(BaseSettings):
 
     @property
     def email_available(self) -> bool:
-        return self.email_provider == "file" or (
-            self.email_provider == "resend" and bool(self.resend_api_key and self.email_from)
-        )
+        return (self.email_provider == "file" or
+                (self.email_provider == "resend" and bool(self.resend_api_key and self.email_from)) or
+                (self.email_provider == "brevo" and bool(self.brevo_api_key and self.email_from)))
 
     @property
     def cors_origins_list(self) -> list[str]:

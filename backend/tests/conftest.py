@@ -17,6 +17,7 @@ os.environ["RESEND_API_KEY"] = ""
 os.environ["EMAIL_FROM"] = ""
 os.environ["EMAIL_SINK_DIR"] = str(Path(_root.name) / "email-sink")
 os.environ["REQUIRE_EMAIL_VERIFICATION"] = "false"
+os.environ["REGISTRATION_EMAIL_DOMAIN"] = ""
 os.environ["PUBLIC_FRONTEND_URL"] = "http://localhost:5173"
 
 from fastapi.testclient import TestClient

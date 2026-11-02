@@ -8,6 +8,7 @@ from tools.deployment_check import run_deployment_checks
 def production_settings(tmp_path: Path, **changes) -> Settings:
     values = {
         "environment": "production",
+        "registration_email_domain": "suh.edu.in",
         "secret_key": "secure-random-production-secret-0123456789-ABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "database_url": "sqlite:///" + (tmp_path / "production.db").as_posix(),
         "upload_dir": str(tmp_path / "uploads"),

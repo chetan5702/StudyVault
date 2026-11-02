@@ -28,7 +28,7 @@ from app.database import get_db
 from app.datetime_type import utcnow
 from app.email_delivery import DeliveryError
 from app.models import LoginAttempt, Profile, User, UserStorageUsage
-from app.public_limits import register_limit, login_limit, recovery_limit, token_limit
+from app.public_limits import login_limit, recovery_limit, register_limit, token_limit
 from app.schemas import (
     AccountTokenRequest,
     EmailRequest,
@@ -206,6 +206,9 @@ def register_user(payload: UserRegister, db: Session = Depends(get_db), _throttl
         try:
             send_account_email(*verification_delivery)
         except DeliveryError as exc:
+            # The delivery adapter raises sanitized messages such as an HTTP status;
+            # never log the recipient, API key, or verification URL/token.
+            logger.warning("Registration verification email delivery failed: %s", exc)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=(
