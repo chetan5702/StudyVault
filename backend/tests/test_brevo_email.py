@@ -11,6 +11,7 @@ from app.email_delivery import BrevoProvider, DeliveryError, configured_provider
 def test_brevo_production_settings():
     s = Settings(
         environment="production",
+        registration_email_domain="suh.edu.in",
         secret_key="a-strong-unique-secret-ABCD1234-zyxw9876-EXTRA",
         require_email_verification=True,
         public_frontend_url="https://studyvault-frontend.vercel.app",
