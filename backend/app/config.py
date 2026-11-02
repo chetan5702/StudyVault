@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import re
 import secrets
 from functools import lru_cache
-import re
 from typing import Literal
 from urllib.parse import urlparse
 
