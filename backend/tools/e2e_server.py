@@ -18,6 +18,7 @@ with tempfile.TemporaryDirectory(prefix="studyvault-browser-", ignore_cleanup_er
         UPLOAD_DIR=str(Path(temp) / "uploads"),
         SECRET_KEY="isolated-browser-test-secret-not-for-deployment",
         CORS_ORIGINS="http://127.0.0.1:5174",
+        REGISTRATION_EMAIL_DOMAIN="",
         EMAIL_PROVIDER="file",
         EMAIL_FROM="StudyVault <reminders@example.test>",
         EMAIL_SINK_DIR=str(Path(temp) / "email-outbox"),
