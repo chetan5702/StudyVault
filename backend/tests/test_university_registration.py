@@ -1,9 +1,9 @@
 """University-domain registration policy, legacy account compatibility and verification."""
 import pytest
 
-from app.config import get_settings, Settings
+from app.config import Settings, get_settings
 from app.database import SessionLocal
-from app.models import User, Profile
+from app.models import Profile, User
 
 P = "/api/v1/auth"
 
