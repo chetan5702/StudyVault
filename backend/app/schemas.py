@@ -5,8 +5,6 @@ from datetime import datetime
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from app.config import get_settings
-
 from pydantic import (
     AwareDatetime,
     BaseModel,
@@ -16,6 +14,8 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+
+from app.config import get_settings
 
 _PHONE_NUMBER_PATTERN = re.compile(r"^\+?[0-9 ()-]+$")
 
