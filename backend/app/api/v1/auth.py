@@ -28,7 +28,7 @@ from app.database import get_db
 from app.datetime_type import utcnow
 from app.email_delivery import DeliveryError
 from app.models import LoginAttempt, Profile, User, UserStorageUsage
-from app.public_limits import register_limit, login_limit, recovery_limit, token_limit
+from app.public_limits import login_limit, recovery_limit, register_limit, token_limit
 from app.schemas import (
     AccountTokenRequest,
     EmailRequest,

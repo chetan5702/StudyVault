@@ -7,7 +7,8 @@ export type Exam = { id: string; title: string; subject_id: string; exam_type: s
 export type Notification = { id: string; exam_id: string | null; title: string; message: string; scheduled_for: string; delivered_at: string | null; read_at: string | null }
 export type NotificationList = { items: Notification[]; unread_count: number }
 export type ReminderPreferences = { in_app_enabled: boolean; email_enabled: boolean; reminder_minutes: number[]; timezone: string; email_available: boolean }
-export type Dashboard = { welcome: string; stats: { subjects: number; materials: number; upcoming_exams: number; pending_tasks: number }; next_exam: { title: string; subject: string; scheduled_for: string } | null; recent_materials: Material[] }
+export type RecentMaterial = Pick<Material, 'id' | 'title' | 'category' | 'file_name' | 'mime_type'> & { created_at: string | null }
+export type Dashboard = { welcome: string; stats: { subjects: number; materials: number; upcoming_exams: number; pending_tasks: number }; next_exam: { title: string; subject: string; scheduled_for: string } | null; recent_materials: RecentMaterial[]; pending_tasks: { id: string; title: string; completed: boolean; due_date: string | null }[] }
 export type AuthResult = {
   access_token: string | null
   token_type: 'bearer'

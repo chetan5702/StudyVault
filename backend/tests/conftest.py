@@ -56,7 +56,7 @@ def student(client):
         "/api/v1/auth/register",
         json={
             "full_name": "Student One",
-            "email": "one@example.com",
+            "email": "one@aiml.suh.edu.in",
             "password": "Password123!",
         },
     ).json()

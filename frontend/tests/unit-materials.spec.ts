@@ -17,7 +17,7 @@ async function createWorkspace(request: APIRequestContext, label: string) {
   const registered = await request.post(`${api}/auth/register`, {
     data: {
       full_name: 'Unit Material Student',
-      email: `${label}-${Date.now()}@example.com`,
+      email: `${label}-${Date.now()}@aiml.suh.edu.in`,
       password: 'Password123!',
     },
   })

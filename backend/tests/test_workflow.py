@@ -31,7 +31,7 @@ def second(client):
         P + "/auth/register",
         json={
             "full_name": "Second Student",
-            "email": "two@example.com",
+            "email": "two@aiml.suh.edu.in",
             "password": "Password123!",
         },
     )
@@ -73,9 +73,19 @@ def test_complete_workflow(client, student, pdf):
     dashboard = client.get(P + "/dashboard", headers=student).json()
     assert dashboard["stats"]["subjects"] == 1
     assert dashboard["stats"]["materials"] == 1
+    assert dashboard["recent_materials"] == [
+        {
+            "id": material["id"],
+            "title": material["title"],
+            "category": material["category"],
+            "file_name": material["file_name"],
+            "mime_type": "application/pdf",
+            "created_at": datetime.fromisoformat(material["created_at"]).isoformat(),
+        }
+    ]
     assert datetime.fromisoformat(dashboard["next_exam"]["scheduled_for"]) == date
     login = client.post(
-        P + "/auth/login", json={"email": "one@example.com", "password": "Password123!"}
+        P + "/auth/login", json={"email": "one@aiml.suh.edu.in", "password": "Password123!"}
     ).json()
     again = {"Authorization": "Bearer " + login["access_token"]}
     assert len(client.get(P + "/subjects", headers=again).json()) == 1
@@ -169,7 +179,7 @@ def test_auth_failures(client, student):
     )
     assert (
         client.post(
-            P + "/auth/login", json={"email": "one@example.com", "password": "wrong"}
+            P + "/auth/login", json={"email": "one@aiml.suh.edu.in", "password": "wrong"}
         ).status_code
         == 401
     )
@@ -178,7 +188,7 @@ def test_auth_failures(client, student):
             P + "/auth/register",
             json={
                 "full_name": "A",
-                "email": "one@example.com",
+                "email": "one@aiml.suh.edu.in",
                 "password": "Password123!",
             },
         ).status_code

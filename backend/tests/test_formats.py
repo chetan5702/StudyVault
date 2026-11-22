@@ -111,7 +111,7 @@ def test_inactive_account_denied(client, student):
     assert client.get(P + "/subjects", headers=student).status_code == 401
     assert (
         client.post(
-            P + "/auth/login", json={"email": "one@example.com", "password": "Password123!"}
+            P + "/auth/login", json={"email": "one@aiml.suh.edu.in", "password": "Password123!"}
         ).status_code
         == 401
     )

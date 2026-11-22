@@ -4,6 +4,7 @@ __pycache__/
 .pytest-*/
 *.pyc
 node_modules/
+.npm-cache/
 dist/
 .env
 *.db

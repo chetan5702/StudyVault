@@ -2,7 +2,7 @@ import { test, expect, type Page, type Route } from '@playwright/test'
 
 async function prepareStudent(page: Page, prefix: string) {
   const response = await page.request.post('/api/v1/auth/register', {
-    data: { full_name: 'Session Student', email: `${prefix}-${Date.now()}@example.com`, password: 'Password123!' },
+    data: { full_name: 'Session Student', email: `${prefix}-${Date.now()}@aiml.suh.edu.in`, password: 'Password123!' },
   })
   expect(response.status()).toBe(201)
   const { access_token: token } = await response.json()

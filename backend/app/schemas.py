@@ -109,6 +109,16 @@ class UserRegister(BaseModel):
     password: str = Field(min_length=8, max_length=72)
     phone_number: str | None = Field(default=None, max_length=25)
 
+    @field_validator("email")
+    @classmethod
+    def university_email(cls, value: str) -> str:
+        domain = value.rsplit("@", 1)[1].lower()
+        if domain != "suh.edu.in" and not domain.endswith(".suh.edu.in"):
+            raise ValueError(
+                "Use your official SUH university email (@suh.edu.in or a department subdomain)"
+            )
+        return value
+
     @field_validator("full_name")
     @classmethod
     def valid_name(cls, value: str) -> str:
