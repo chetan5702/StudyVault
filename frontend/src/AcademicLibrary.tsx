@@ -39,8 +39,8 @@ export function AcademicLibraryPage() {
     </Panel> : <>
       <div className="academic-context"><div><small>DEPARTMENT</small><strong>{department?.name || 'Not assigned'}</strong></div>
         <div><small>BRANCH</small><strong>{branch?.name || 'Unknown branch'}</strong></div>
-        <div><small>YEAR / SEMESTER</small><strong>Year {profile.data.year_of_study || Math.ceil(profile.data.semester! / 2)} · Semester {profile.data.semester}</strong></div>
-        <div><small>ACADEMIC SESSION</small><strong>{profile.data.academic_year || 'Not selected'}</strong></div>
+        <div><small>YEAR / SEMESTER</small><strong>Year {profile.data?.year_of_study || Math.ceil((profile.data?.semester || 1) / 2)} · Semester {profile.data?.semester}</strong></div>
+        <div><small>ACADEMIC SESSION</small><strong>{profile.data?.academic_year || 'Not selected'}</strong></div>
       </div>
       <p className="muted academic-disclaimer">Semester and branch information is self-reported. Only reviewed and published entries appear here. Your personal uploads and group files stay separate.</p>
       <div className="academic-filters">
