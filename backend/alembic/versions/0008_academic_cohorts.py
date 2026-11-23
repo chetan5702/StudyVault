@@ -146,6 +146,25 @@ def downgrade():
     op.drop_index("ix_academic_resources_subject_published", table_name="academic_resources")
     op.drop_table("academic_resources")
     op.drop_table("academic_subjects")
+
+    # Remove only catalog branches created by this migration and not in use.
+    # Never delete a course referenced by a student profile or subject.
+    bind = op.get_bind()
+    for branch_id, branch_name in BRANCHES:
+        used_by_profile = bind.execute(
+            sa.text("SELECT 1 FROM profiles WHERE course_id=:id LIMIT 1"), {"id": branch_id}
+        ).first()
+        used_by_subject = bind.execute(
+            sa.text("SELECT 1 FROM subjects WHERE course_id=:id LIMIT 1"), {"id": branch_id}
+        ).first()
+        if used_by_profile or used_by_subject:
+            continue
+        bind.execute(
+            sa.text(
+                "DELETE FROM courses WHERE id=:id AND college_id=:college AND name=:name"
+            ),
+            {"id": branch_id, "college": SUH_ID, "name": branch_name},
+        )
     with op.batch_alter_table("profiles") as batch:
         batch.drop_constraint("ck_profiles_year_of_study", type_="check")
         batch.drop_constraint("fk_profiles_department_id_departments", type_="foreignkey")
