@@ -127,7 +127,12 @@ test('complete student workflow and second-account private isolation', async ({ 
   await page.getByLabel('Full name').fill('Second Browser Student')
   await page.getByLabel('Email address').fill(`second-${email}`)
   await page.getByLabel('Password', { exact: true }).fill(password)
+  const secondRegistration = page.waitForResponse(r =>
+    r.url().endsWith('/auth/register') && r.request().method() === 'POST'
+  )
   await page.getByRole('button', { name: 'Create account' }).click()
+  const secondResponse = await secondRegistration
+  expect(secondResponse.status(), await secondResponse.text()).toBe(201)
   await expect(page).toHaveURL(/profile/)
   await page.getByRole('link', { name: 'Materials', exact: true }).click()
   await expect(page.getByText('No materials yet.', { exact: false })).toBeVisible()

@@ -23,7 +23,7 @@ test('student selects a branch and semester and sees a scoped academic library',
   await page.getByRole('button', { name: 'Save academic profile' }).click()
   await expect(page.getByText('Academic profile saved.')).toBeVisible()
 
-  await page.getByRole('link', { name: 'Semester library' }).click()
+  await page.getByRole('link', { name: 'Semester library', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Your semester library' })).toBeVisible()
   await expect(page.getByText('Year 2 · Semester 4')).toBeVisible()
   await expect(page.getByText('CSE – Artificial Intelligence and Machine Learning')).toBeVisible()
@@ -37,7 +37,7 @@ test('student selects a branch and semester and sees a scoped academic library',
   })
   await page.getByRole('button', { name: 'Save academic profile' }).click()
   await expect(page.getByText('Academic profile saved.')).toBeVisible()
-  await page.getByRole('link', { name: 'Semester library' }).click()
+  await page.getByRole('link', { name: 'Semester library', exact: true }).click()
   await expect(page.getByText('CSE – Data Science')).toBeVisible()
   expect(errors).toEqual([])
 })
