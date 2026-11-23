@@ -57,6 +57,15 @@ class CollegeOut(BaseModel):
     updated_at: datetime | None = None
 
 
+
+class DepartmentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    college_id: str
+    code: str
+    name: str
+
+
 class CourseCreate(BaseModel):
     college_id: str
     name: str
@@ -67,6 +76,7 @@ class CourseOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
     college_id: str
+    department_id: str | None = None
     name: str
     degree: str | None = None
     created_at: datetime | None = None
@@ -75,8 +85,10 @@ class CourseOut(BaseModel):
 
 class ProfileUpdate(BaseModel):
     college_id: str | None = None
+    department_id: str | None = None
     course_id: str | None = None
-    academic_year: str | None = None
+    year_of_study: int | None = Field(default=None, ge=1, le=4)
+    academic_year: str | None = Field(default=None, max_length=20)
     semester: int | None = Field(default=None, ge=1, le=20)
     section: str | None = None
     phone_number: str | None = Field(default=None, max_length=25)
@@ -94,13 +106,40 @@ class ProfileOut(BaseModel):
     id: str
     user_id: str
     college_id: str | None = None
+    department_id: str | None = None
     course_id: str | None = None
+    year_of_study: int | None = None
     academic_year: str | None = None
     semester: int | None = None
     section: str | None = None
     phone_number: str | None = None
     avatar_url: str | None = None
     bio: str | None = None
+
+
+
+class AcademicSubjectOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    course_id: str
+    semester: int
+    code: str
+    name: str
+
+
+class AcademicResourceOut(BaseModel):
+    id: str
+    subject_id: str
+    subject_code: str
+    subject_name: str
+    semester: int
+    title: str
+    url: str
+    category: str
+    source_label: str | None = None
+    unit_number: int | None = None
+    unit_title: str | None = None
+    academic_session: str | None = None
 
 
 class UserRegister(BaseModel):

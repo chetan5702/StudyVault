@@ -30,8 +30,28 @@ class College(Base):
     created_at = Column(UTCDateTime, default=utcnow)
     updated_at = Column(UTCDateTime, default=utcnow, onupdate=utcnow)
 
+    departments = relationship("Department", back_populates="college")
     courses = relationship("Course", back_populates="college")
     profiles = relationship("Profile", back_populates="college")
+
+
+
+class Department(Base):
+    """StudyVault academic grouping; does not confer official enrollment verification."""
+
+    __tablename__ = "departments"
+    __table_args__ = (UniqueConstraint("college_id", "code", name="uq_departments_college_code"),)
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    college_id = Column(String, ForeignKey("colleges.id"), nullable=False)
+    code = Column(String(32), nullable=False)
+    name = Column(String(200), nullable=False)
+    created_at = Column(UTCDateTime, default=utcnow)
+    updated_at = Column(UTCDateTime, default=utcnow, onupdate=utcnow)
+
+    college = relationship("College", back_populates="departments")
+    courses = relationship("Course", back_populates="department")
+    profiles = relationship("Profile", back_populates="department")
 
 
 class Course(Base):
@@ -39,12 +59,14 @@ class Course(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     college_id = Column(String, ForeignKey("colleges.id"), nullable=False)
+    department_id = Column(String, ForeignKey("departments.id"), nullable=True)
     name = Column(String, nullable=False)
     degree = Column(String, nullable=True)
     created_at = Column(UTCDateTime, default=utcnow)
     updated_at = Column(UTCDateTime, default=utcnow, onupdate=utcnow)
 
     college = relationship("College", back_populates="courses")
+    department = relationship("Department", back_populates="courses")
     profiles = relationship("Profile", back_populates="course")
     subjects = relationship("Subject", back_populates="course")
 
@@ -140,7 +162,9 @@ class Profile(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     user_id = Column(String, ForeignKey("users.id"), unique=True, nullable=False)
     college_id = Column(String, ForeignKey("colleges.id"), nullable=True)
+    department_id = Column(String, ForeignKey("departments.id"), nullable=True)
     course_id = Column(String, ForeignKey("courses.id"), nullable=True)
+    year_of_study = Column(Integer, nullable=True)
     academic_year = Column(String, nullable=True)
     semester = Column(Integer, nullable=True)
     section = Column(String, nullable=True)
@@ -152,6 +176,7 @@ class Profile(Base):
 
     user = relationship("User", back_populates="profile")
     college = relationship("College", back_populates="profiles")
+    department = relationship("Department", back_populates="profiles")
     course = relationship("Course", back_populates="profiles")
 
 
@@ -188,6 +213,55 @@ class Unit(Base):
 
     subject = relationship("Subject", back_populates="units")
     materials = relationship("Material", back_populates="unit")
+
+
+
+class AcademicSubject(Base):
+    """Read-only curated semester syllabus; separate from students' personal Subject."""
+
+    __tablename__ = "academic_subjects"
+    __table_args__ = (
+        UniqueConstraint("course_id", "semester", "code", name="uq_academic_subject_scope_code"),
+        CheckConstraint("semester BETWEEN 1 AND 8", name="ck_academic_subject_semester"),
+    )
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    course_id = Column(String, ForeignKey("courses.id"), nullable=False)
+    semester = Column(Integer, nullable=False)
+    code = Column(String(40), nullable=False)
+    name = Column(String(200), nullable=False)
+    created_at = Column(UTCDateTime, default=utcnow)
+    updated_at = Column(UTCDateTime, default=utcnow, onupdate=utcnow)
+
+    resources = relationship("AcademicResource", back_populates="subject")
+
+
+class AcademicResource(Base):
+    """Published, curator-approved external study links only; never private user uploads."""
+
+    __tablename__ = "academic_resources"
+    __table_args__ = (
+        Index("ix_academic_resources_subject_published", "subject_id", "is_published"),
+        CheckConstraint(
+            "unit_number IS NULL OR unit_number >= 1",
+            name="ck_academic_resources_unit_positive",
+        ),
+    )
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    subject_id = Column(String, ForeignKey("academic_subjects.id"), nullable=False)
+    title = Column(String(200), nullable=False)
+    url = Column(String(2048), nullable=False)
+    category = Column(String(40), nullable=False, default="notes")
+    source_label = Column(String(200), nullable=True)
+    unit_number = Column(Integer, nullable=True)
+    unit_title = Column(String(200), nullable=True)
+    academic_session = Column(String(20), nullable=True)
+    is_published = Column(Boolean, nullable=False, default=False)
+    created_at = Column(UTCDateTime, default=utcnow)
+    updated_at = Column(UTCDateTime, default=utcnow, onupdate=utcnow)
+
+    subject = relationship("AcademicSubject", back_populates="resources")
 
 
 class ClassGroup(Base):

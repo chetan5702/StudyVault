@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app import models  # noqa: F401
 from app.api.v1 import (
+    academic,
     auth,
     colleges,
     dashboard,
@@ -92,6 +93,7 @@ def readiness_check() -> dict[str, str]:
 
 app.include_router(auth.router, prefix=settings.api_v1_prefix)
 app.include_router(profile.router, prefix=settings.api_v1_prefix)
+app.include_router(academic.router, prefix=settings.api_v1_prefix)
 app.include_router(colleges.router, prefix=settings.api_v1_prefix)
 app.include_router(subjects.router, prefix=settings.api_v1_prefix)
 app.include_router(materials.router, prefix=settings.api_v1_prefix)
