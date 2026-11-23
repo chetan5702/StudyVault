@@ -13,7 +13,7 @@ function pdfBuffer() {
 }
 
 test('complete student workflow and second-account private isolation', async ({ page }, testInfo) => {
-  const email = `browser-${Date.now()}@cse.suh.edu.in`
+  const email = `browser-${Date.now()}@aiml.suh.edu.in`
   const password = 'Password123!'
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
@@ -33,13 +33,17 @@ test('complete student workflow and second-account private isolation', async ({ 
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page.getByRole('heading', { name: 'Academic profile' })).toBeVisible()
   await expect(page.getByLabel('Phone number (optional)')).toHaveValue('+919876543210')
-  await expect(page.getByLabel('College (optional)').locator('option', { hasText: 'Sreenidhi University' })).toHaveCount(1)
-  await page.getByLabel('Academic year').fill('2026-27')
-  await page.getByLabel('Semester', { exact: true }).fill('2')
+  await page.getByLabel('University').selectOption({ label: 'Sreenidhi University' })
+  await page.getByLabel('Department').selectOption({ label: 'Computer Science and Engineering' })
+  await page.getByLabel('Branch / specialization').selectOption({ label: 'CSE – Artificial Intelligence and Machine Learning' })
+  await page.getByLabel('Year of study').selectOption('1')
+  await expect(page.getByTestId('academic-semester')).toBeVisible()
+  await page.getByTestId('academic-semester').selectOption('2')
+  await page.getByLabel('Academic session').fill('2026-27')
   await page.getByLabel('Section (optional)').fill('B')
   await page.getByLabel('Phone number (optional)').fill('(987) 654-3211')
-  await page.getByRole('button', { name: 'Save profile' }).click()
-  await expect(page.getByText('Saved successfully.')).toBeVisible()
+  await page.getByRole('button', { name: 'Save academic profile' }).click()
+  await expect(page.getByText('Academic profile saved.')).toBeVisible()
   await page.reload()
   await expect(page.getByLabel('Phone number (optional)')).toHaveValue('9876543211')
   await page.getByRole('link', { name: 'Subjects', exact: true }).click()
@@ -106,7 +110,7 @@ test('complete student workflow and second-account private isolation', async ({ 
   await expect(page.getByRole('heading', { name: 'Browser Midterm' })).toBeVisible()
   await page.getByRole('link', { name: 'Dashboard', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Browser Midterm' })).toBeVisible()
-  await expect(page.locator('.countdown')).toHaveText(/2d 23h \d+m remaining/)
+  await expect(page.locator('.countdown').first()).toHaveText(/2d 23h \d+m remaining/)
   await page.screenshot({ path: testInfo.outputPath('dashboard.png'), fullPage: true })
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Browser Midterm' })).toBeVisible()
@@ -123,7 +127,12 @@ test('complete student workflow and second-account private isolation', async ({ 
   await page.getByLabel('Full name').fill('Second Browser Student')
   await page.getByLabel('Email address').fill(`second-${email}`)
   await page.getByLabel('Password', { exact: true }).fill(password)
+  const secondRegistration = page.waitForResponse(r =>
+    r.url().endsWith('/auth/register') && r.request().method() === 'POST'
+  )
   await page.getByRole('button', { name: 'Create account' }).click()
+  const secondResponse = await secondRegistration
+  expect(secondResponse.status(), await secondResponse.text()).toBe(201)
   await expect(page).toHaveURL(/profile/)
   await page.getByRole('link', { name: 'Materials', exact: true }).click()
   await expect(page.getByText('No materials yet.', { exact: false })).toBeVisible()

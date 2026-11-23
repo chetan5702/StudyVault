@@ -85,6 +85,8 @@ Delivery uses a database coordination row, persistent claims and a two-minute cr
 
 ## Email verification and password recovery
 
+New registrations require an official SUH email address at `suh.edu.in` or one of its department subdomains, such as `aiml.suh.edu.in`. Both the browser and API enforce this rule. Existing accounts with other email domains can still log in and recover their passwords.
+
 Local development defaults to `REQUIRE_EMAIL_VERIFICATION=false`, so registration returns a session immediately. Production configuration requires verified email delivery. A production registration stores the account as unverified, sends a single-use verification link and directs the browser to the check-email page. Verification links expire after `EMAIL_VERIFICATION_TOKEN_EXPIRE_MINUTES`; resends are limited by `VERIFICATION_RESEND_COOLDOWN_SECONDS`.
 
 The login page links to password recovery. Reset requests return the same generic response whether or not the address exists, and email delivery runs after that response so provider latency and failures do not disclose account existence. Reset links expire after `PASSWORD_RESET_TOKEN_EXPIRE_MINUTES`. Only token digests are stored. Consuming a reset token changes the password, increments the account's token version and invalidates JWTs issued before the reset.

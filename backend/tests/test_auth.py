@@ -21,7 +21,7 @@ def test_register_login_flow() -> None:
     with TestClient(app) as client:
         payload = {
             "full_name": "Test Student",
-            "email": "student@example.com",
+            "email": "student@aiml.suh.edu.in",
             "password": "Password123!",
         }
         register = client.post("/api/v1/auth/register", json=payload)
@@ -33,6 +33,55 @@ def test_register_login_flow() -> None:
         )
         assert login.status_code == 200, login.text
         assert "access_token" in login.json()
+
+
+@pytest.mark.parametrize(
+    "email", ["student@suh.edu.in", "student@cse.suh.edu.in", "Student@DS.SUH.EDU.IN"]
+)
+def test_registration_accepts_university_domains(client, email):
+    response = client.post(
+        "/api/v1/auth/register",
+        json={"full_name": "Student", "email": email, "password": "Password123!"},
+    )
+    assert response.status_code == 201, response.text
+    assert response.json()["user"]["email"] == email.lower()
+
+
+@pytest.mark.parametrize(
+    "email",
+    ["student@example.com", "student@notsuh.edu.in", "student@suh.edu.in.example.com"],
+)
+def test_registration_rejects_external_and_lookalike_domains(client, email):
+    response = client.post(
+        "/api/v1/auth/register",
+        json={"full_name": "Student", "email": email, "password": "Password123!"},
+    )
+    assert response.status_code == 422, response.text
+    assert "official SUH university email" in response.json()["detail"][0]["msg"]
+    with SessionLocal() as db:
+        assert db.query(User).count() == 0
+
+
+def test_existing_external_email_account_can_login_and_request_recovery(client, monkeypatch):
+    email = "existing@example.com"
+    with SessionLocal() as db:
+        db.add(
+            User(
+                email=email,
+                full_name="Existing Student",
+                password_hash=auth.hash_password("Password123!"),
+            )
+        )
+        db.commit()
+    login = client.post("/api/v1/auth/login", json={"email": email, "password": "Password123!"})
+    assert login.status_code == 200, login.text
+    assert login.json()["access_token"]
+    deliveries = []
+    monkeypatch.setattr(auth, "send_account_email", lambda *delivery: deliveries.append(delivery))
+    recovery = client.post("/api/v1/auth/request-password-reset", json={"email": email})
+    assert recovery.status_code == 200, recovery.text
+    assert len(deliveries) == 1
+    assert deliveries[0][0] == email
 
 
 @pytest.mark.parametrize(
@@ -49,7 +98,7 @@ def test_registration_normalizes_and_persists_optional_phone_number(
         "/api/v1/auth/register",
         json={
             "full_name": "Phone Student",
-            "email": "phone@example.com",
+            "email": "phone@aiml.suh.edu.in",
             "password": "Password123!",
             "phone_number": submitted,
         },
@@ -72,7 +121,7 @@ def test_registration_normalizes_and_persists_optional_phone_number(
 def test_registration_allows_an_omitted_or_blank_phone_number(client, submitted) -> None:
     payload = {
         "full_name": "No Phone Student",
-        "email": "no-phone@example.com",
+        "email": "no-phone@aiml.suh.edu.in",
         "password": "Password123!",
     }
     if submitted is not None:
@@ -103,7 +152,7 @@ def test_registration_rejects_invalid_phone_numbers(client, submitted) -> None:
         "/api/v1/auth/register",
         json={
             "full_name": "Invalid Phone Student",
-            "email": "invalid-phone@example.com",
+            "email": "invalid-phone@aiml.suh.edu.in",
             "password": "Password123!",
             "phone_number": submitted,
         },
@@ -134,7 +183,7 @@ def test_registration_email_race_returns_duplicate_without_changing_winner(
 ) -> None:
     payload = {
         "full_name": "Losing Student",
-        "email": "Racing.Student@example.com",
+        "email": "Racing.Student@aiml.suh.edu.in",
         "password": "Password123!",
     }
     winner_password = "WinnerPassword123!"
@@ -194,7 +243,7 @@ def test_registration_rolls_back_and_preserves_unrelated_integrity_errors(
             "/api/v1/auth/register",
             json={
                 "full_name": "Student",
-                "email": "failed@example.com",
+                "email": "failed@aiml.suh.edu.in",
                 "password": "Password123!",
             },
         )

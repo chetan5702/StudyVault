@@ -1,13 +1,18 @@
 export type User = { id: string; email: string; full_name: string }
 export type Subject = { id: string; code: string; name: string; semester: number | null }
 export type Unit = { id: string; subject_id: string; name: string; order_index: number }
-export type Profile = { academic_year: string | null; semester: number | null; section: string | null; phone_number: string | null; college_id: string | null; course_id: string | null }
+export type Profile = { academic_year: string | null; year_of_study: number | null; semester: number | null; section: string | null; phone_number: string | null; college_id: string | null; department_id: string | null; course_id: string | null }
+export type Department = { id: string; college_id: string; code: string; name: string }
+export type Course = { id: string; college_id: string; department_id: string | null; name: string; degree: string | null }
+export type AcademicSubject = { id: string; course_id: string; semester: number; code: string; name: string }
+export type AcademicResource = { id: string; subject_id: string; subject_code: string; subject_name: string; semester: number; title: string; url: string; category: string; source_label: string | null; unit_number: number | null; unit_title: string | null; academic_session: string | null }
 export type Material = { id: string; user_id: string; title: string; file_name: string; size_bytes: number; mime_type: string; subject_id: string; unit_id: string | null; category: string; visibility: string; created_at: string }
 export type Exam = { id: string; title: string; subject_id: string; exam_type: string; scheduled_for: string; location: string | null; timezone: string }
 export type Notification = { id: string; exam_id: string | null; title: string; message: string; scheduled_for: string; delivered_at: string | null; read_at: string | null }
 export type NotificationList = { items: Notification[]; unread_count: number }
 export type ReminderPreferences = { in_app_enabled: boolean; email_enabled: boolean; reminder_minutes: number[]; timezone: string; email_available: boolean }
-export type Dashboard = { welcome: string; stats: { subjects: number; materials: number; upcoming_exams: number; pending_tasks: number }; next_exam: { title: string; subject: string; scheduled_for: string } | null; recent_materials: Material[] }
+export type RecentMaterial = Pick<Material, 'id' | 'title' | 'category' | 'file_name' | 'mime_type'> & { created_at: string | null }
+export type Dashboard = { welcome: string; stats: { subjects: number; materials: number; upcoming_exams: number; pending_tasks: number }; next_exam: { title: string; subject: string; scheduled_for: string } | null; recent_materials: RecentMaterial[]; pending_tasks: { id: string; title: string; completed: boolean; due_date: string | null }[] }
 export type AuthResult = {
   access_token: string | null
   token_type: 'bearer'

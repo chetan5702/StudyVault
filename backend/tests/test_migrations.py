@@ -47,7 +47,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.config import get_settings
 with TestClient(app) as c:
-    r = c.post('/api/v1/auth/register', json={'full_name':'Persistent Student','email':'persist@example.com','password':'Password123!'})
+    r = c.post('/api/v1/auth/register', json={'full_name':'Persistent Student','email':'persist@aiml.suh.edu.in','password':'Password123!'})
     assert r.status_code == 201, r.text
     h = {'Authorization':'Bearer '+r.json()['access_token']}
     assert c.put('/api/v1/profile/me', headers=h, json={'academic_year':'2026-27','semester':2}).status_code == 200
@@ -81,7 +81,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.config import get_settings
 with TestClient(app) as c:
-    r = c.post('/api/v1/auth/login',json={'email':'persist@example.com','password':'Password123!'})
+    r = c.post('/api/v1/auth/login',json={'email':'persist@aiml.suh.edu.in','password':'Password123!'})
     assert r.status_code == 200
     h = {'Authorization':'Bearer '+r.json()['access_token']}
     subject = c.get('/api/v1/subjects',headers=h).json()[0]
@@ -134,7 +134,7 @@ def test_legacy_adoption_preserves_rows(tmp_path):
         assert ("192b6a88-03c6-515a-afcc-0cb6055b59fd", "Sreenidhi University") in colleges
         assert (
             conn.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-            == "0007_public_limits_and_membership"
+            == "0008_academic_cohorts"
         )
     engine.dispose()
 
@@ -211,7 +211,7 @@ def test_exam_reminder_migration_preserves_existing_student_data(tmp_path):
         )
         assert (
             conn.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-            == "0007_public_limits_and_membership"
+            == "0008_academic_cohorts"
         )
     engine.dispose()
 

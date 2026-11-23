@@ -4,7 +4,7 @@ test.use({ timezoneId: 'Asia/Kolkata' })
 
 async function prepareStudent(page: Page, prefix: string) {
   const account = await page.request.post('/api/v1/auth/register', {
-    data: { full_name: 'Reminder Student', email: `${prefix}-${Date.now()}@example.com`, password: 'Password123!' },
+    data: { full_name: 'Reminder Student', email: `${prefix}-${Date.now()}@aiml.suh.edu.in`, password: 'Password123!' },
   })
   expect(account.status()).toBe(201)
   const { access_token: token } = await account.json()

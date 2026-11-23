@@ -24,7 +24,7 @@ def second_student(client):
         P + "/auth/register",
         json={
             "full_name": "Student Two",
-            "email": "two@example.com",
+            "email": "two@aiml.suh.edu.in",
             "password": "Password123!",
         },
     )
@@ -34,7 +34,7 @@ def second_student(client):
 
 def configure_academic_profile():
     with SessionLocal() as db:
-        user = db.query(User).filter(User.email == "one@example.com").one()
+        user = db.query(User).filter(User.email == "one@aiml.suh.edu.in").one()
         college = College(name="Student College")
         other_college = College(name="Other College")
         db.add_all([college, other_college])

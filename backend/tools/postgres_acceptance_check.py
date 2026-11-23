@@ -77,8 +77,8 @@ def main():
     doc = pdf_contents()
 
     with TestClient(app) as client:
-        owner = register(client, "pg-owner@example.com")
-        outsider = register(client, "pg-outsider@example.com")
+        owner = register(client, "pg-owner@aiml.suh.edu.in")
+        outsider = register(client, "pg-outsider@aiml.suh.edu.in")
         check(client.get("/api/v1/materials"), 401, "unauthenticated library blocked")
         created = check(
             client.post(
