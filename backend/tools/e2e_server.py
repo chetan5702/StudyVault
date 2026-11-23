@@ -13,6 +13,11 @@ with tempfile.TemporaryDirectory(prefix="studyvault-browser-", ignore_cleanup_er
     os.environ.update(
         ENVIRONMENT="test",
         SEED_DEMO="false",
+        # All browser specs originate from one disposable localhost IP. Give
+        # the test harness ample headroom without weakening production limits.
+        REGISTER_PER_HOUR="1000",
+        LOGIN_PER_HOUR="1000",
+        RECOVERY_PER_HOUR="1000",
         STUDYVAULT_DEBUG="false",
         DATABASE_URL="sqlite:///" + (Path(temp) / "browser.db").as_posix(),
         UPLOAD_DIR=str(Path(temp) / "uploads"),

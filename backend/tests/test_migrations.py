@@ -134,7 +134,7 @@ def test_legacy_adoption_preserves_rows(tmp_path):
         assert ("192b6a88-03c6-515a-afcc-0cb6055b59fd", "Sreenidhi University") in colleges
         assert (
             conn.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-            == "0007_public_limits_and_membership"
+            == "0008_academic_cohorts"
         )
     engine.dispose()
 
@@ -211,7 +211,7 @@ def test_exam_reminder_migration_preserves_existing_student_data(tmp_path):
         )
         assert (
             conn.exec_driver_sql("SELECT version_num FROM alembic_version").scalar()
-            == "0007_public_limits_and_membership"
+            == "0008_academic_cohorts"
         )
     engine.dispose()
 
