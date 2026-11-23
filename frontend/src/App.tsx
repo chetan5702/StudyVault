@@ -433,7 +433,7 @@ function ProfilePage() {
           <Field label="Year of study"><select value={year} onChange={e => { const value = Number(e.target.value); setYear(value); setSemester(value * 2 - 1); setSaved(false) }}>
             {[1, 2, 3, 4].map(y => <option key={y} value={y}>Year {y}</option>)}
           </select></Field>
-          <Field label="Semester"><select value={semester} onChange={e => { setSemester(Number(e.target.value)); setSaved(false) }}>
+          <Field label="Semester"><select aria-label="Semester" data-testid="academic-semester" value={semester} onChange={e => { setSemester(Number(e.target.value)); setSaved(false) }}>
             {[year * 2 - 1, year * 2].map(s => <option key={s} value={s}>Semester {s}</option>)}
           </select></Field>
           <Field label="Academic session"><input name="academic_year" defaultValue={data.academic_year || ''} placeholder="e.g. 2026-27" maxLength={20} /></Field>
