@@ -201,6 +201,40 @@ class VerifiedEnrollment(Base):
     created_at = Column(UTCDateTime, nullable=True, default=utcnow)
 
 
+class StaffRole(Base):
+    """Staff privileges can only be provisioned by an authenticated admin
+    or by a separate operator-only bootstrap command; never at signup."""
+
+    __tablename__ = "staff_roles"
+    __table_args__ = (
+        CheckConstraint("role IN ('admin', 'faculty')", name="ck_staff_roles_allowed"),
+    )
+
+    user_id = Column(String, ForeignKey("users.id"), primary_key=True)
+    role = Column(String(16), nullable=False)
+    granted_at = Column(UTCDateTime, nullable=False, default=utcnow)
+
+
+class TeachingAssignment(Base):
+    __tablename__ = "teaching_assignments"
+
+    faculty_id = Column(String, ForeignKey("users.id"), primary_key=True)
+    subject_id = Column(String, ForeignKey("academic_subjects.id"), primary_key=True)
+    assigned_by_id = Column(String, ForeignKey("users.id"), nullable=False)
+    created_at = Column(UTCDateTime, nullable=False, default=utcnow)
+
+
+class StaffAuditEvent(Base):
+    """Append-only record of privileged changes (not a student activity log)."""
+
+    __tablename__ = "staff_audit_events"
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    actor_id = Column(String, ForeignKey("users.id"), nullable=False)
+    action = Column(String(64), nullable=False)
+    entity_id = Column(String, nullable=False)
+    occurred_at = Column(UTCDateTime, nullable=False, default=utcnow)
+
+
 class Subject(Base):
     __tablename__ = "subjects"
 
@@ -258,7 +292,7 @@ class AcademicSubject(Base):
 
 
 class AcademicResource(Base):
-    """Published, curator-approved external study links only; never private user uploads."""
+    """Official faculty uploads or curated external links, never personal files."""
 
     __tablename__ = "academic_resources"
     __table_args__ = (
@@ -272,7 +306,12 @@ class AcademicResource(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     subject_id = Column(String, ForeignKey("academic_subjects.id"), nullable=False)
     title = Column(String(200), nullable=False)
-    url = Column(String(2048), nullable=False)
+    url = Column(String(2048), nullable=True)
+    storage_key = Column(String, nullable=True)
+    file_name = Column(String(200), nullable=True)
+    mime_type = Column(String(200), nullable=True)
+    size_bytes = Column(Integer, nullable=True)
+    uploaded_by_id = Column(String, ForeignKey("users.id"), nullable=True)
     category = Column(String(40), nullable=False, default="notes")
     source_label = Column(String(200), nullable=True)
     unit_number = Column(Integer, nullable=True)
