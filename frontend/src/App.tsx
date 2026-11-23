@@ -1,9 +1,10 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { BrowserRouter, NavLink, Navigate, Outlet, Route, Routes, Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { request, post, session, download, type User, type AuthResult, type Subject, type Unit, type Material, type Profile, type Dashboard, type Exam } from './api'
+import { request, post, session, download, type User, type AuthResult, type Subject, type Unit, type Material, type Profile, type Department, type Course, type Dashboard, type Exam } from './api'
 import { Panel, Field, Empty, ErrorMessage, AsyncForm, Countdown, LoadingState } from './components'
 import { useData } from './hooks'
 import { ExamsPage } from './Exams'
+import { AcademicLibraryPage } from './AcademicLibrary'
 import { NotificationBell, NotificationProvider, NotificationsPage, ReminderSettingsPage } from './Notifications'
 import { formatExamDate, localTimezone } from './dates'
 import { FileTypeIcon, Icon, type IconName } from './icons'
@@ -141,6 +142,7 @@ function ResetPasswordPage() {
 const navigation: { path: string; icon: IconName; label: string }[] = [
   { path: '/', icon: 'dashboard', label: 'Dashboard' },
   { path: '/subjects', icon: 'book', label: 'Subjects' },
+  { path: '/academic', icon: 'book', label: 'Semester library' },
   { path: '/materials', icon: 'files', label: 'Materials' },
   { path: '/exams', icon: 'calendar', label: 'Exams' },
   { path: '/settings/reminders', icon: 'bell', label: 'Reminders' },
@@ -378,14 +380,80 @@ function DeleteMaterialDialog({ material, close, deleted }: { material: Material
   return <dialog ref={dialog} className="confirm-dialog" aria-labelledby="delete-material-title" onCancel={event => { event.preventDefault(); if (!busy) close() }}><h2 id="delete-material-title">Delete material?</h2><p>Delete <strong>{material.title}</strong> and its stored file? This action cannot be undone.</p><ErrorMessage message={error} /><div className="button-row"><button className="secondary-button" autoFocus disabled={busy} onClick={close}>Keep material</button><button className="button danger-button" disabled={busy} onClick={() => void remove()}>{busy ? 'Deleting…' : 'Delete material'}</button></div></dialog>
 }
 function ProfilePage() {
-  const { data, loading, error } = useData<Profile>('/profile/me')
+  const { data, loading, error, reload } = useData<Profile>('/profile/me')
   const colleges = useData<{ id: string; name: string }[]>('/colleges')
-  const courses = useData<{ id: string; name: string; college_id: string }[]>('/courses')
+  const departments = useData<Department[]>('/departments')
+  const courses = useData<Course[]>('/courses')
   const [chosenCollege, setCollege] = useState<string | null>(null)
+  const [chosenDepartment, setDepartment] = useState<string | null>(null)
+  const [chosenCourse, setCourse] = useState<string | null>(null)
+  const [chosenYear, setYear] = useState<number | null>(null)
+  const [chosenSemester, setSemester] = useState<number | null>(null)
+  const [saveError, setSaveError] = useState('')
+  const [saved, setSaved] = useState(false)
+
   const college = chosenCollege ?? data?.college_id ?? ''
-  return <><Heading title="Academic profile" subtitle="Set up the details that make this workspace yours." /><ErrorMessage message={error || colleges.error || courses.error} />{loading ? <LoadingState label="Loading profile…" /> : data && <div className="profile-layout"><Panel title="Your academic details"><AsyncForm key={JSON.stringify(data)} label="Save profile" onSubmit={d => post('/profile/me', { academic_year: d.get('academic_year'), semester: Number(d.get('semester')), section: d.get('section'), phone_number: String(d.get('phone_number') || '').trim() || null, college_id: college || null, course_id: d.get('course_id') || null }, 'PUT')}><Field label="Academic year"><input name="academic_year" placeholder="e.g. 2026-27" defaultValue={data.academic_year || ''} required /></Field><Field label="Semester"><input name="semester" type="number" min={1} max={20} defaultValue={data.semester || 1} required /></Field><Field label="Section (optional)"><input name="section" defaultValue={data.section || ''} /></Field><PhoneField defaultValue={data.phone_number || ''} helpId="profile-phone-help" />{!!colleges.data?.length && <Field label="College (optional)"><select value={college} onChange={e => setCollege(e.target.value)}><option value="">Select college</option>{colleges.data.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>}{college && <Field label="Course (optional)"><select key={college} name="course_id" defaultValue={data.course_id || ''}><option value="">Select course</option>{courses.data?.filter(c => c.college_id === college).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></Field>}</AsyncForm></Panel><div className="profile-note"><p className="eyebrow">A FRESH START</p><h2>Your studies.<br />Your space.</h2><p>Once your profile is saved, add a subject and start building your personal library.</p><Link className="button" to="/subjects">Go to subjects<Icon name="arrow-right" size={17} /></Link></div></div>}</>
+  const department = chosenDepartment ?? data?.department_id ?? ''
+  const course = chosenCourse ?? data?.course_id ?? ''
+  const year = chosenYear ?? data?.year_of_study ?? (data?.semester && data.semester <= 8 ? Math.ceil(data.semester / 2) : 1)
+  const semester = chosenSemester ?? (data?.semester && Math.ceil(data.semester / 2) === year ? data.semester : year * 2 - 1)
+  const filteredDepartments = (departments.data || []).filter(d => d.college_id === college)
+  const filteredCourses = (courses.data || []).filter(c => c.college_id === college && c.department_id === department)
+
+  return <><Heading title="Academic profile" subtitle="Choose your department, branch and semester to personalize your academic library." />
+    <ErrorMessage message={error || colleges.error || departments.error || courses.error || saveError} />
+    {saved && <p className="success">Academic profile saved.</p>}
+    {loading ? <LoadingState label="Loading profile…" /> : data && <div className="profile-layout">
+      <Panel title="Your academic details">
+        <AsyncForm key={JSON.stringify(data)} label="Save academic profile" onSubmit={async d => {
+          setSaveError(''); setSaved(false)
+          try {
+            await post('/profile/me', {
+              college_id: college || null,
+              department_id: department || null,
+              course_id: course || null,
+              year_of_study: year,
+              semester,
+              academic_year: String(d.get('academic_year') || '').trim() || null,
+              section: String(d.get('section') || '').trim() || null,
+              phone_number: String(d.get('phone_number') || '').trim() || null,
+            }, 'PUT')
+            setSaved(true); reload()
+          } catch (e) { setSaveError((e as Error).message) }
+        }}>
+          <Field label="University"><select value={college} onChange={e => { setCollege(e.target.value); setDepartment(''); setCourse(''); setSaved(false) }}>
+            <option value="">Select university</option>
+            {(colleges.data || []).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select></Field>
+          {college && <Field label="Department"><select value={department} onChange={e => { setDepartment(e.target.value); setCourse(''); setSaved(false) }}>
+            <option value="">Select department</option>
+            {filteredDepartments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+          </select></Field>}
+          {department && <Field label="Branch / specialization"><select value={course} onChange={e => { setCourse(e.target.value); setSaved(false) }}>
+            <option value="">Select branch</option>
+            {filteredCourses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select></Field>}
+          <Field label="Year of study"><select value={year} onChange={e => { const value = Number(e.target.value); setYear(value); setSemester(value * 2 - 1); setSaved(false) }}>
+            {[1, 2, 3, 4].map(y => <option key={y} value={y}>Year {y}</option>)}
+          </select></Field>
+          <Field label="Semester"><select value={semester} onChange={e => { setSemester(Number(e.target.value)); setSaved(false) }}>
+            {[year * 2 - 1, year * 2].map(s => <option key={s} value={s}>Semester {s}</option>)}
+          </select></Field>
+          <Field label="Academic session"><input name="academic_year" defaultValue={data.academic_year || ''} placeholder="e.g. 2026-27" maxLength={20} /></Field>
+          <Field label="Section (optional)"><input name="section" defaultValue={data.section || ''} /></Field>
+          <PhoneField defaultValue={data.phone_number || ''} helpId="profile-phone-help" />
+        </AsyncForm>
+      </Panel>
+      <div className="profile-note">
+        <p className="eyebrow">YOUR STUDY CONTEXT</p>
+        <h2>Your branch.<br />Your semester.</h2>
+        <p>Your selections determine which published semester resources you can browse. These selections are self-reported, not university-verified enrollment. Your personal notes remain private.</p>
+        <Link className="button" to="/academic">Open semester library<Icon name="arrow-right" size={17} /></Link>
+      </div>
+    </div>}
+  </>
 }
 
 export default function App() {
-  return <BrowserRouter><AuthProvider><Routes><Route path="/login" element={<AuthPage />} /><Route path="/register" element={<AuthPage register />} /><Route path="/check-email" element={<CheckEmailPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/forgot-password" element={<ForgotPasswordPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route element={<Layout />}><Route index element={<DashboardPage />} /><Route path="subjects" element={<SubjectsPage />} /><Route path="subjects/:id" element={<SubjectPage />} /><Route path="materials" element={<MaterialsPage />} /><Route path="exams" element={<ExamsPage />} /><Route path="exams/calendar" element={<ExamsPage />} /><Route path="notifications" element={<NotificationsPage />} /><Route path="settings/reminders" element={<ReminderSettingsPage />} /><Route path="profile" element={<ProfilePage />} /><Route path="*" element={<Navigate to="/" replace />} /></Route></Routes></AuthProvider></BrowserRouter>
+  return <BrowserRouter><AuthProvider><Routes><Route path="/login" element={<AuthPage />} /><Route path="/register" element={<AuthPage register />} /><Route path="/check-email" element={<CheckEmailPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/forgot-password" element={<ForgotPasswordPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route element={<Layout />}><Route index element={<DashboardPage />} /><Route path="academic" element={<AcademicLibraryPage />} /><Route path="subjects" element={<SubjectsPage />} /><Route path="subjects/:id" element={<SubjectPage />} /><Route path="materials" element={<MaterialsPage />} /><Route path="exams" element={<ExamsPage />} /><Route path="exams/calendar" element={<ExamsPage />} /><Route path="notifications" element={<NotificationsPage />} /><Route path="settings/reminders" element={<ReminderSettingsPage />} /><Route path="profile" element={<ProfilePage />} /><Route path="*" element={<Navigate to="/" replace />} /></Route></Routes></AuthProvider></BrowserRouter>
 }
