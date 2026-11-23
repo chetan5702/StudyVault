@@ -2,7 +2,12 @@
 
 from app.database import SessionLocal
 from app.models import (
-    AcademicResource, College, Course, Department, StaffAuditEvent, StaffRole,
+    AcademicResource,
+    College,
+    Course,
+    Department,
+    StaffAuditEvent,
+    StaffRole,
     VerifiedEnrollment,
 )
 
@@ -88,7 +93,6 @@ def test_complete_faculty_admin_student_flow(client, pdf):
         "course_id": ds_course, "semester": 3, "code": "DS301", "name": "Data Analytics",
     })
     assert other_created.status_code == 201, other_created.text
-    other_subject_id = other_created.json()["id"]
     duplicate = client.post(API + "/staff/subjects", headers=admin, json={
         "course_id": ai_course, "semester": 3, "code": "AIML301", "name": "Duplicate",
     })

@@ -18,8 +18,8 @@ from app.api.v1 import (
     materials,
     notifications,
     profile,
-    subjects,
     staff,
+    subjects,
     tasks,
 )
 from app.config import get_settings
