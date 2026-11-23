@@ -1,7 +1,7 @@
-"""Read-only academic library scoped to the student's declared academic profile.
+"""Read-only academic resources scoped to trusted enrollment, not editable Profile.
 
-No user upload can appear here automatically. Publication requires a separate
-trusted curation process; declared branch and semester are not verified enrollment.
+A separate approved provisioning mechanism will populate enrollments. Students
+have no route to write or select a trusted academic scope.
 """
 
 from __future__ import annotations
@@ -11,18 +11,30 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.config import get_settings
 from app.database import get_db
-from app.models import AcademicResource, AcademicSubject, Profile, User
-from app.schemas import AcademicResourceOut, AcademicSubjectOut
+from app.models import AcademicResource, AcademicSubject, User, VerifiedEnrollment
+from app.schemas import AcademicResourceOut, AcademicSubjectOut, VerifiedEnrollmentOut
 
 router = APIRouter(tags=["academic-library"])
 
 
-def current_scope(db: Session, user: User) -> tuple[str, int] | None:
-    profile = db.query(Profile).filter(Profile.user_id == user.id).first()
-    if not profile or not profile.course_id or not profile.semester:
+def current_enrollment(db: Session, user: User) -> VerifiedEnrollment | None:
+    enrollment = db.get(VerifiedEnrollment, user.id)
+    if enrollment is None:
         return None
-    return profile.course_id, profile.semester
+    # Synthetic test enrollment is NEVER an authorized production record.
+    if enrollment.verification_source == "development" and get_settings().environment == "production":
+        return None
+    return enrollment
+
+
+@router.get("/academic/enrollment", response_model=VerifiedEnrollmentOut | None)
+def my_verified_enrollment(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> VerifiedEnrollment | None:
+    return current_enrollment(db, current_user)
 
 
 @router.get("/academic/subjects", response_model=list[AcademicSubjectOut])
@@ -30,13 +42,15 @@ def list_academic_subjects(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[AcademicSubject]:
-    scope = current_scope(db, current_user)
-    if scope is None:
+    enrollment = current_enrollment(db, current_user)
+    if enrollment is None:
         return []
-    course_id, semester = scope
     return (
         db.query(AcademicSubject)
-        .filter(AcademicSubject.course_id == course_id, AcademicSubject.semester == semester)
+        .filter(
+            AcademicSubject.course_id == enrollment.course_id,
+            AcademicSubject.semester == enrollment.semester,
+        )
         .order_by(AcademicSubject.name)
         .all()
     )
@@ -47,26 +61,21 @@ def list_academic_resources(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[dict]:
-    profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
-    if not profile or not profile.course_id or not profile.semester:
+    enrollment = current_enrollment(db, current_user)
+    if enrollment is None:
         return []
-
-    # Session-specific content is excluded unless it matches the declared
-    # academic session. Global resources (NULL) remain visible.
-    scope_filter = AcademicResource.academic_session.is_(None)
-    if profile.academic_year:
-        scope_filter = or_(
-            scope_filter, AcademicResource.academic_session == profile.academic_year
-        )
 
     rows = (
         db.query(AcademicResource, AcademicSubject)
         .join(AcademicSubject, AcademicResource.subject_id == AcademicSubject.id)
         .filter(
-            AcademicSubject.course_id == profile.course_id,
-            AcademicSubject.semester == profile.semester,
+            AcademicSubject.course_id == enrollment.course_id,
+            AcademicSubject.semester == enrollment.semester,
             AcademicResource.is_published.is_(True),
-            scope_filter,
+            or_(
+                AcademicResource.academic_session.is_(None),
+                AcademicResource.academic_session == enrollment.academic_session,
+            ),
         )
         .order_by(AcademicSubject.name, AcademicResource.unit_number, AcademicResource.title)
         .all()

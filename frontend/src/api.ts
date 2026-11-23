@@ -4,6 +4,7 @@ export type Unit = { id: string; subject_id: string; name: string; order_index: 
 export type Profile = { academic_year: string | null; year_of_study: number | null; semester: number | null; section: string | null; phone_number: string | null; college_id: string | null; department_id: string | null; course_id: string | null }
 export type Department = { id: string; college_id: string; code: string; name: string }
 export type Course = { id: string; college_id: string; department_id: string | null; name: string; degree: string | null }
+export type VerifiedEnrollment = { course_id: string; semester: number; academic_session: string; verification_source: 'university' | 'admin' | 'development'; verified_at: string }
 export type AcademicSubject = { id: string; course_id: string; semester: number; code: string; name: string }
 export type AcademicResource = { id: string; subject_id: string; subject_code: string; subject_name: string; semester: number; title: string; url: string; category: string; source_label: string | null; unit_number: number | null; unit_title: string | null; academic_session: string | null }
 export type Material = { id: string; user_id: string; title: string; file_name: string; size_bytes: number; mime_type: string; subject_id: string; unit_id: string | null; category: string; visibility: string; created_at: string }
