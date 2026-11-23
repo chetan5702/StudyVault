@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { BrowserRouter, NavLink, Navigate, Outlet, Route, Routes, Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { request, post, session, download, type User, type AuthResult, type Subject, type Unit, type Material, type Profile, type Department, type Course, type Dashboard, type Exam } from './api'
+import { request, post, session, download, type User, type StaffRole, type AuthResult, type Subject, type Unit, type Material, type Profile, type Department, type Course, type Dashboard, type Exam } from './api'
 import { Panel, Field, Empty, ErrorMessage, AsyncForm, Countdown, LoadingState } from './components'
 import { useData } from './hooks'
 import { ExamsPage } from './Exams'
 import { AcademicLibraryPage } from './AcademicLibrary'
+import { StaffWorkspacePage } from './StaffWorkspace'
 import { NotificationBell, NotificationProvider, NotificationsPage, ReminderSettingsPage } from './Notifications'
 import { formatExamDate, localTimezone } from './dates'
 import { FileTypeIcon, Icon, type IconName } from './icons'
@@ -151,13 +152,14 @@ const navigation: { path: string; icon: IconName; label: string }[] = [
 
 function Layout() {
   const { user, logout } = useContext(Auth)
+  const staff = useData<StaffRole>('/staff/me')
   const [open, setOpen] = useState(false)
   if (!user) return <Navigate to="/login" replace />
   return <NotificationProvider key={user.id}><div className="app-shell">
     <aside id="workspace-navigation" className={`sidebar ${open ? 'is-open' : ''}`}>
       <Link className="brand" to="/"><Icon name="vault" size={25} />StudyVault</Link>
       <p className="nav-label">WORKSPACE</p>
-      <nav>{navigation.map(item => <NavLink end={item.path === '/'} key={item.path} to={item.path} onClick={() => setOpen(false)}><Icon name={item.icon} size={20} />{item.label}</NavLink>)}</nav>
+      <nav>{[...navigation, ...(staff.data?.role ? [{ path: '/staff', icon: 'book' as IconName, label: staff.data.role === 'admin' ? 'Administration' : 'Faculty workspace' }] : [])].map(item => <NavLink end={item.path === '/'} key={item.path} to={item.path} onClick={() => setOpen(false)}><Icon name={item.icon} size={20} />{item.label}</NavLink>)}</nav>
       <div className="sidebar-bottom"><div className="avatar">{user.full_name.charAt(0).toUpperCase()}</div><div className="account-copy"><strong>{user.full_name}</strong><small>Student workspace</small></div><button onClick={logout} className="logout">Log out</button></div>
     </aside>
     {open && <button className="nav-scrim" aria-label="Close navigation" onClick={() => setOpen(false)} />}
@@ -444,7 +446,7 @@ function ProfilePage() {
       <div className="profile-note">
         <p className="eyebrow">YOUR STUDY CONTEXT</p>
         <h2>Your branch.<br />Your semester.</h2>
-        <p>Your selections determine which published semester resources you can browse. These selections are self-reported, not university-verified enrollment. Your personal notes remain private.</p>
+        <p>Your selections organize your personal study workspace. Official semester resources require separately approved enrollment, not self-reported profile fields.</p>
         <Link className="button" to="/academic">Open semester library<Icon name="arrow-right" size={17} /></Link>
       </div>
     </div>}
@@ -452,5 +454,5 @@ function ProfilePage() {
 }
 
 export default function App() {
-  return <BrowserRouter><AuthProvider><Routes><Route path="/login" element={<AuthPage />} /><Route path="/register" element={<AuthPage register />} /><Route path="/check-email" element={<CheckEmailPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/forgot-password" element={<ForgotPasswordPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route element={<Layout />}><Route index element={<DashboardPage />} /><Route path="academic" element={<AcademicLibraryPage />} /><Route path="subjects" element={<SubjectsPage />} /><Route path="subjects/:id" element={<SubjectPage />} /><Route path="materials" element={<MaterialsPage />} /><Route path="exams" element={<ExamsPage />} /><Route path="exams/calendar" element={<ExamsPage />} /><Route path="notifications" element={<NotificationsPage />} /><Route path="settings/reminders" element={<ReminderSettingsPage />} /><Route path="profile" element={<ProfilePage />} /><Route path="*" element={<Navigate to="/" replace />} /></Route></Routes></AuthProvider></BrowserRouter>
+  return <BrowserRouter><AuthProvider><Routes><Route path="/login" element={<AuthPage />} /><Route path="/register" element={<AuthPage register />} /><Route path="/check-email" element={<CheckEmailPage />} /><Route path="/verify-email" element={<VerifyEmailPage />} /><Route path="/forgot-password" element={<ForgotPasswordPage />} /><Route path="/reset-password" element={<ResetPasswordPage />} /><Route element={<Layout />}><Route index element={<DashboardPage />} /><Route path="academic" element={<AcademicLibraryPage />} /><Route path="staff" element={<StaffWorkspacePage />} /><Route path="subjects" element={<SubjectsPage />} /><Route path="subjects/:id" element={<SubjectPage />} /><Route path="materials" element={<MaterialsPage />} /><Route path="exams" element={<ExamsPage />} /><Route path="exams/calendar" element={<ExamsPage />} /><Route path="notifications" element={<NotificationsPage />} /><Route path="settings/reminders" element={<ReminderSettingsPage />} /><Route path="profile" element={<ProfilePage />} /><Route path="*" element={<Navigate to="/" replace />} /></Route></Routes></AuthProvider></BrowserRouter>
 }
