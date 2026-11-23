@@ -77,6 +77,11 @@ test('verification link exchanges its token and starts the verified session', as
       await route.fulfill({ json: [] })
     } else if (path.endsWith('/notifications')) {
       await route.fulfill({ json: { items: [], unread_count: 0 } })
+    } else if (path.endsWith('/staff/me')) {
+      // Newly logged-in mocked student has no staff role. Without this mock
+      // the real API correctly rejects the fake bearer token with 401,
+      // which ends the synthetic browser session.
+      await route.fulfill({ json: { role: null } })
     } else {
       await route.continue()
     }
