@@ -71,7 +71,7 @@ def main():
 
     with engine.connect() as connection:
         assert connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one() == (
-            "0008_academic_cohorts"
+            "0009_verified_enrollments"
         )
     print("PASS PostgreSQL schema revision", flush=True)
     doc = pdf_contents()

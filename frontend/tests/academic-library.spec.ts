@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test('student selects a branch and semester and sees a scoped academic library', async ({ page }) => {
+test('student cannot unlock official semester materials by editing a profile', async ({ page }) => {
   const email = `academic-${Date.now()}@aiml.suh.edu.in`
   const errors: string[] = []
   page.on('pageerror', error => errors.push(error.message))
@@ -25,11 +25,9 @@ test('student selects a branch and semester and sees a scoped academic library',
 
   await page.getByRole('link', { name: 'Semester library', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Your semester library' })).toBeVisible()
-  await expect(page.getByText('Year 2 · Semester 4')).toBeVisible()
-  await expect(page.getByText('CSE – Artificial Intelligence and Machine Learning')).toBeVisible()
-  await expect(page.getByText(/No curated subjects have been published/)).toBeVisible()
+  await expect(page.getByText('Awaiting approved academic enrollment')).toBeVisible()
 
-  await page.getByRole('link', { name: 'Edit academic profile' }).click()
+  await page.getByRole('link', { name: 'Academic profile', exact: true }).click()
   await expect(page.getByLabel('Year of study')).toHaveValue('2')
   await expect(page.getByTestId('academic-semester')).toHaveValue('4')
   await page.getByLabel('Branch / specialization').selectOption({
@@ -38,6 +36,6 @@ test('student selects a branch and semester and sees a scoped academic library',
   await page.getByRole('button', { name: 'Save academic profile' }).click()
   await expect(page.getByText('Academic profile saved.')).toBeVisible()
   await page.getByRole('link', { name: 'Semester library', exact: true }).click()
-  await expect(page.getByText('CSE – Data Science')).toBeVisible()
+  await expect(page.getByText('Awaiting approved academic enrollment')).toBeVisible()
   expect(errors).toEqual([])
 })

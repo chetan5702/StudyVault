@@ -1,20 +1,20 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { type AcademicResource, type AcademicSubject, type Course, type Department, type Profile } from './api'
+import { type AcademicResource, type AcademicSubject, type Course, type Department, type VerifiedEnrollment } from './api'
 import { Empty, ErrorMessage, LoadingState, Panel } from './components'
 import { useData } from './hooks'
 import { Icon } from './icons'
 
 export function AcademicLibraryPage() {
-  const profile = useData<Profile>('/profile/me')
+  const enrollment = useData<VerifiedEnrollment | null>('/academic/enrollment')
   const courses = useData<Course[]>('/courses')
   const departments = useData<Department[]>('/departments')
   const subjects = useData<AcademicSubject[]>('/academic/subjects')
   const resources = useData<AcademicResource[]>('/academic/resources')
   const [subjectId, setSubjectId] = useState('')
   const [search, setSearch] = useState('')
-  const branch = courses.data?.find(c => c.id === profile.data?.course_id)
-  const department = departments.data?.find(d => d.id === profile.data?.department_id)
+  const branch = courses.data?.find(c => c.id === enrollment.data?.course_id)
+  const department = departments.data?.find(d => d.id === branch?.department_id)
   const currentSubjects = subjects.data || []
   const filteredResources = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -23,26 +23,26 @@ export function AcademicLibraryPage() {
       (!query || [r.title, r.subject_name, r.category, r.unit_title || '', r.source_label || ''].some(value => value.toLowerCase().includes(query)))
     )
   }, [resources.data, subjectId, search])
-  const allLoaded = !profile.loading && !courses.loading && !departments.loading && !subjects.loading && !resources.loading
-  const profileReady = !!profile.data?.course_id && !!profile.data?.semester
-  const error = profile.error || courses.error || departments.error || subjects.error || resources.error
+  const allLoaded = !enrollment.loading && !courses.loading && !departments.loading && !subjects.loading && !resources.loading
+  const profileReady = !!enrollment.data
+  const error = enrollment.error || courses.error || departments.error || subjects.error || resources.error
 
   return <section className="academic-library">
     <header className="page-heading"><div>
       <p className="eyebrow">STUDYVAULT / ACADEMIC LIBRARY</p>
       <h1>Your semester library</h1>
-      <p className="muted">Reviewed academic resources organized by department, branch, semester, subject and unit.</p>
-    </div><Link to="/profile" className="secondary-button"><Icon name="edit" size={16} /> Edit academic profile</Link></header>
+      <p className="muted">Approved academic resources filtered by trusted enrollment.</p>
+    </div><Link to="/materials" className="secondary-button"><Icon name="files" size={16} /> Personal materials</Link></header>
     <ErrorMessage message={error} />
-    {!allLoaded ? <LoadingState label="Loading your academic library…" /> : !profileReady ? <Panel title="Set up your academic context">
-      <Empty>Choose a university, department, branch and semester in your academic profile before browsing resources.<p><Link to="/profile" className="inline-action">Complete your profile</Link></p></Empty>
+    {!allLoaded ? <LoadingState label="Loading your academic library…" /> : !profileReady ? <Panel title="Awaiting approved academic enrollment">
+      <Empty>The official semester library requires approved enrollment. Editing your personal academic profile does not grant access. <Link to="/materials">Your personal materials are still available.</Link></Empty>
     </Panel> : <>
       <div className="academic-context"><div><small>DEPARTMENT</small><strong>{department?.name || 'Not assigned'}</strong></div>
         <div><small>BRANCH</small><strong>{branch?.name || 'Unknown branch'}</strong></div>
-        <div><small>YEAR / SEMESTER</small><strong>Year {profile.data?.year_of_study || Math.ceil((profile.data?.semester || 1) / 2)} · Semester {profile.data?.semester}</strong></div>
-        <div><small>ACADEMIC SESSION</small><strong>{profile.data?.academic_year || 'Not selected'}</strong></div>
+        <div><small>YEAR / SEMESTER</small><strong>Year {Math.ceil((enrollment.data?.semester || 1) / 2)} · Semester {enrollment.data?.semester}</strong></div>
+        <div><small>ACADEMIC SESSION</small><strong>{enrollment.data?.academic_session || 'Not selected'}</strong></div>
       </div>
-      <p className="muted academic-disclaimer">Semester and branch information is self-reported. Only reviewed and published entries appear here. Your personal uploads and group files stay separate.</p>
+      <p className="muted academic-disclaimer">Academic access comes from approved enrollment, not self-reported profile fields. External resource links may have separate access rules.</p>
       <div className="academic-filters">
         <label>Subject<select value={subjectId} onChange={e => setSubjectId(e.target.value)}><option value="">All semester subjects</option>{currentSubjects.map(s => <option value={s.id} key={s.id}>{s.code} · {s.name}</option>)}</select></label>
         <label>Find a resource<input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search notes, unit or question bank" /></label>
