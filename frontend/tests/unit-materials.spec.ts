@@ -138,6 +138,9 @@ test('combines material filters and confirms owner deletion', async ({ page, req
   await expect(page.getByRole('heading', { name: 'Delete me PDF' })).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Clear filters' }).click()
+  await expect(page.getByLabel('Search materials')).toHaveValue('')
+  await expect(page.getByLabel('Filter by subject')).toHaveValue('')
+  await expect(page.getByRole('combobox', { name: 'Category', exact: true })).toHaveValue('')
   await page.getByRole('combobox', { name: 'Category', exact: true }).selectOption('assignment')
   const categoryFilter = page.waitForResponse(response => {
     const url = new URL(response.url())
