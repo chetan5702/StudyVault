@@ -110,7 +110,7 @@ test('complete student workflow and second-account private isolation', async ({ 
   await expect(page.getByRole('heading', { name: 'Browser Midterm' })).toBeVisible()
   await page.getByRole('link', { name: 'Dashboard', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Browser Midterm' })).toBeVisible()
-  await expect(page.locator('.countdown')).toHaveText(/2d 23h \d+m remaining/)
+  await expect(page.locator('.countdown').first()).toHaveText(/2d 23h \d+m remaining/)
   await page.screenshot({ path: testInfo.outputPath('dashboard.png'), fullPage: true })
   await page.reload()
   await expect(page.getByRole('heading', { name: 'Browser Midterm' })).toBeVisible()
