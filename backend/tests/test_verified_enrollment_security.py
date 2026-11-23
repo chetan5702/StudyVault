@@ -140,10 +140,12 @@ def test_multi_student_branch_semester_session_isolation_and_revocation(client):
     assert {r["title"] for r in client.get(API + "/academic/resources", headers=ai_headers).json()} == ai_titles
 
     # A user cannot create/change/delete trusted enrollment via the API.
-    for method in (client.post, client.patch, client.delete):
-        response = method(
-            API + "/academic/enrollment", headers=ai_headers,
-            json={"course_id": ds_id, "semester": 3} if method != client.delete else None,
+    for http_method in ("POST", "PATCH", "DELETE"):
+        response = client.request(
+            http_method,
+            API + "/academic/enrollment",
+            headers=ai_headers,
+            json={"course_id": ds_id, "semester": 3},
         )
         assert response.status_code == 405, response.text
     assert client.get(API + "/academic/enrollment").status_code == 401
