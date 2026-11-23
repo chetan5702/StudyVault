@@ -7,7 +7,6 @@ from app.models import (
     College,
     Course,
     Department,
-    User,
 )
 
 P = "/api/v1"
