@@ -35,9 +35,29 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
-        with context.begin_transaction():
-            context.run_migrations()
+        # SQLite has no ALTER TABLE ADD/DROP CONSTRAINT support. Alembic
+        # recreates tables, which can require temporarily disabling FK
+        # enforcement while the old table is dropped. Do this *before* the
+        # migration transaction, then validate every reference afterward.
+        sqlite = connection.dialect.name == "sqlite"
+        if sqlite:
+            connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+            connection.commit()
+        try:
+            context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+            with context.begin_transaction():
+                context.run_migrations()
+            if sqlite:
+                violations = connection.exec_driver_sql("PRAGMA foreign_key_check").fetchall()
+                if violations:
+                    raise RuntimeError(
+                        f"Migration left invalid SQLite foreign-key references: {violations[:5]}"
+                    )
+        finally:
+            if sqlite:
+                connection.commit()
+                connection.exec_driver_sql("PRAGMA foreign_keys=ON")
+                connection.commit()
 
 
 if context.is_offline_mode():
