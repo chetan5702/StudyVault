@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.config import get_settings
 from app.database import get_db
-from app.object_storage import download_stored_file
 from app.models import AcademicResource, AcademicSubject, User, VerifiedEnrollment
+from app.object_storage import download_stored_file
 from app.schemas import AcademicResourceOut, AcademicSubjectOut, VerifiedEnrollmentOut
 
 router = APIRouter(tags=["academic-library"])

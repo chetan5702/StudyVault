@@ -12,14 +12,12 @@ from pathlib import PurePosixPath
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.config import get_settings
 from app.database import get_db
-from app.datetime_type import utcnow
 from app.models import (
     AcademicResource, AcademicSubject, Course, StaffAuditEvent, StaffRole,
     TeachingAssignment, User,
@@ -271,8 +269,6 @@ def upload_faculty_resource(
 
     # Use the same content validation as personal uploads (PDF, images, DOCX).
     from app.api.v1.materials import reserve_storage
-    from pathlib import Path
-
     path, key, mime, size = save_upload(file)
     filename = PurePosixPath((file.filename or key).replace("\\", "/")).name
     filename = "".join(c for c in filename if ord(c) >= 32)[:200] or key
