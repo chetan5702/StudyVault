@@ -52,7 +52,7 @@ def test_registration_verification_uses_hashed_single_use_token(client, monkeypa
     provider = enable_verification(monkeypatch, clock)
     payload = {
         "full_name": "Verify Student",
-        "email": "verify@example.com",
+        "email": "verify@aiml.suh.edu.in",
         "password": "Password123!",
     }
 
@@ -111,7 +111,7 @@ def test_verification_resend_is_generic_cooled_down_and_invalidates_old_token(cl
     monkeypatch.setattr(auth.settings, "verification_resend_cooldown_seconds", 60)
     payload = {
         "full_name": "Verify Student",
-        "email": "verify@example.com",
+        "email": "verify@aiml.suh.edu.in",
         "password": "Password123!",
     }
     assert client.post(P + "/auth/register", json=payload).status_code == 201
@@ -143,7 +143,7 @@ def test_password_reset_is_enumeration_safe_single_use_and_revokes_access(
     monkeypatch.setattr(auth, "utcnow", lambda: clock["now"])
     monkeypatch.setattr(account_security, "configured_provider", lambda: provider)
 
-    existing = client.post(P + "/auth/request-password-reset", json={"email": "one@example.com"})
+    existing = client.post(P + "/auth/request-password-reset", json={"email": "one@aiml.suh.edu.in"})
     unknown = client.post(P + "/auth/request-password-reset", json={"email": "unknown@example.com"})
     assert existing.status_code == unknown.status_code == 200
     assert existing.json() == unknown.json()
@@ -167,13 +167,13 @@ def test_password_reset_is_enumeration_safe_single_use_and_revokes_access(
     assert (
         client.post(
             P + "/auth/login",
-            json={"email": "one@example.com", "password": "Password123!"},
+            json={"email": "one@aiml.suh.edu.in", "password": "Password123!"},
         ).status_code
         == 401
     )
     new_login = client.post(
         P + "/auth/login",
-        json={"email": "one@example.com", "password": "NewPassword123!"},
+        json={"email": "one@aiml.suh.edu.in", "password": "NewPassword123!"},
     )
     assert new_login.status_code == 200, new_login.text
 
@@ -194,7 +194,7 @@ def test_expired_account_token_is_rejected(client, student, monkeypatch):
 
     assert (
         client.post(
-            P + "/auth/request-password-reset", json={"email": "one@example.com"}
+            P + "/auth/request-password-reset", json={"email": "one@aiml.suh.edu.in"}
         ).status_code
         == 200
     )
@@ -213,7 +213,7 @@ def test_password_reset_request_stays_generic_when_background_delivery_fails(
 ):
     monkeypatch.setattr(account_security, "configured_provider", lambda: FailingProvider())
 
-    response = client.post(P + "/auth/request-password-reset", json={"email": "one@example.com"})
+    response = client.post(P + "/auth/request-password-reset", json={"email": "one@aiml.suh.edu.in"})
 
     assert response.status_code == 200
     assert response.json() == {"message": auth.RESET_REQUEST_MESSAGE}
@@ -222,7 +222,6 @@ def test_password_reset_request_stays_generic_when_background_delivery_fails(
 def test_production_requires_verified_email_provider_and_https_frontend():
     secure = {
         "environment": "production",
-        "registration_email_domain": "suh.edu.in",
         "secret_key": "secure-production-secret-4f7a93c8b2e165d0",
         "require_email_verification": True,
         "email_provider": "resend",

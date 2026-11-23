@@ -63,6 +63,7 @@ def get_dashboard(
                 "title": item.title,
                 "category": item.category,
                 "file_name": item.file_name,
+                "mime_type": item.mime_type,
                 "created_at": item.created_at.isoformat() if item.created_at else None,
             }
             for item in recent_materials

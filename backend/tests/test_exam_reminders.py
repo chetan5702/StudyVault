@@ -356,7 +356,7 @@ def test_email_delivery_reuses_idempotency_key_after_transient_failure(client, s
     reminders.run_due_reminders(SessionLocal, now=NOW + timedelta(seconds=60), provider=provider)
     reminders.run_due_reminders(SessionLocal, now=NOW + timedelta(seconds=61), provider=provider)
     assert len(provider.calls) == 2
-    assert provider.calls[0][0] == "one@example.com"
+    assert provider.calls[0][0] == "one@aiml.suh.edu.in"
     assert provider.calls[0][3] == provider.calls[1][3]
     assert len(provider.deliveries) == 1
     assert "Algorithms final" in provider.calls[1][1] + provider.calls[1][2]
@@ -424,7 +424,7 @@ def test_configured_development_email_sink_receives_message_once(
     files = list((tmp_path / "email-sink").glob("*.json"))
     assert len(files) == 1
     payload = json.loads(files[0].read_text(encoding="utf-8"))
-    assert payload["to"] == "one@example.com"
+    assert payload["to"] == "one@aiml.suh.edu.in"
     assert "Algorithms final" in payload["subject"]
     assert "Room 22" in payload["text"]
     assert payload["idempotency_key"] == "studyvault-reminder-" + exam_reminders(exam["id"])[0].id
@@ -439,7 +439,7 @@ def test_resend_adapter_passes_idempotency_key_and_bounded_timeout(monkeypatch):
 
     monkeypatch.setattr(httpx, "post", post)
     result = ResendProvider("test-api-key", "StudyVault <study@example.com>").send(
-        recipient="one@example.com",
+        recipient="one@aiml.suh.edu.in",
         subject="Exam tomorrow",
         body="Study plan",
         idempotency_key="unique-key",
@@ -447,7 +447,7 @@ def test_resend_adapter_passes_idempotency_key_and_bounded_timeout(monkeypatch):
     assert result == "provider-message-id"
     assert requests[0][0] == "https://api.resend.com/emails"
     assert requests[0][1]["headers"]["Idempotency-Key"] == "unique-key"
-    assert requests[0][1]["json"]["to"] == ["one@example.com"]
+    assert requests[0][1]["json"]["to"] == ["one@aiml.suh.edu.in"]
     assert requests[0][1]["timeout"] <= 10
 
 
@@ -456,7 +456,7 @@ def test_resend_adapter_distinguishes_retryable_failures(monkeypatch, status, re
     monkeypatch.setattr(httpx, "post", lambda *args, **kwargs: httpx.Response(status))
     with pytest.raises(reminders.DeliveryError) as error:
         ResendProvider("test-api-key", "study@example.com").send(
-            recipient="one@example.com", subject="Exam", body="Text", idempotency_key="key"
+            recipient="one@aiml.suh.edu.in", subject="Exam", body="Text", idempotency_key="key"
         )
     assert error.value.retryable is retryable
 

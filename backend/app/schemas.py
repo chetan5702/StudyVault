@@ -15,8 +15,6 @@ from pydantic import (
     model_validator,
 )
 
-from app.config import get_settings
-
 _PHONE_NUMBER_PATTERN = re.compile(r"^\+?[0-9 ()-]+$")
 
 
@@ -59,6 +57,15 @@ class CollegeOut(BaseModel):
     updated_at: datetime | None = None
 
 
+
+class DepartmentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    college_id: str
+    code: str
+    name: str
+
+
 class CourseCreate(BaseModel):
     college_id: str
     name: str
@@ -69,6 +76,7 @@ class CourseOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
     college_id: str
+    department_id: str | None = None
     name: str
     degree: str | None = None
     created_at: datetime | None = None
@@ -77,8 +85,10 @@ class CourseOut(BaseModel):
 
 class ProfileUpdate(BaseModel):
     college_id: str | None = None
+    department_id: str | None = None
     course_id: str | None = None
-    academic_year: str | None = None
+    year_of_study: int | None = Field(default=None, ge=1, le=4)
+    academic_year: str | None = Field(default=None, max_length=20)
     semester: int | None = Field(default=None, ge=1, le=20)
     section: str | None = None
     phone_number: str | None = Field(default=None, max_length=25)
@@ -96,13 +106,40 @@ class ProfileOut(BaseModel):
     id: str
     user_id: str
     college_id: str | None = None
+    department_id: str | None = None
     course_id: str | None = None
+    year_of_study: int | None = None
     academic_year: str | None = None
     semester: int | None = None
     section: str | None = None
     phone_number: str | None = None
     avatar_url: str | None = None
     bio: str | None = None
+
+
+
+class AcademicSubjectOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    course_id: str
+    semester: int
+    code: str
+    name: str
+
+
+class AcademicResourceOut(BaseModel):
+    id: str
+    subject_id: str
+    subject_code: str
+    subject_name: str
+    semester: int
+    title: str
+    url: str
+    category: str
+    source_label: str | None = None
+    unit_number: int | None = None
+    unit_title: str | None = None
+    academic_session: str | None = None
 
 
 class UserRegister(BaseModel):
@@ -113,16 +150,14 @@ class UserRegister(BaseModel):
 
     @field_validator("email")
     @classmethod
-    def valid_university_registration_email(cls, value: EmailStr) -> EmailStr:
-        # Validate only registration payloads. Login, password reset and existing
-        # accounts are unaffected, including previously created Gmail accounts.
-        university_domain = get_settings().registration_email_domain
-        if university_domain:
-            email_domain = str(value).rsplit("@", 1)[1].casefold()
-            if email_domain != university_domain and not email_domain.endswith("." + university_domain):
-                raise ValueError(
-                    f"Register using your university email (@{university_domain} or a department subdomain)."
-                )
+    def university_email(cls, value: str) -> str:
+        from app.config import get_settings
+        official_domain = get_settings().registration_email_domain
+        domain = value.rsplit("@", 1)[1].lower()
+        if official_domain and domain != official_domain and not domain.endswith("." + official_domain):
+            raise ValueError(
+                f"Use your official SUH university email (@{official_domain} or a department subdomain)"
+            )
         return value
 
     @field_validator("full_name")

@@ -18,7 +18,7 @@ def test_login_failures_persist_and_lock_with_retry_after(client, student, monke
     monkeypatch.setattr(auth.settings, "login_max_failures", 2)
     monkeypatch.setattr(auth.settings, "login_failure_window_seconds", 120)
     monkeypatch.setattr(auth.settings, "login_lockout_seconds", 60)
-    credentials = {"email": "ONE@EXAMPLE.COM", "password": "wrong-password"}
+    credentials = {"email": "ONE@AIML.SUH.EDU.IN", "password": "wrong-password"}
 
     assert client.post(P + "/auth/login", json=credentials).status_code == 401
     assert client.post(P + "/auth/login", json=credentials).status_code == 401
@@ -55,7 +55,7 @@ def test_successful_login_resets_failure_counter(client, student, monkeypatch):
     fixed_now = datetime(2030, 1, 1, 12, 0, tzinfo=UTC)
     monkeypatch.setattr(auth, "utcnow", lambda: fixed_now)
     monkeypatch.setattr(auth.settings, "login_max_failures", 2)
-    credentials = {"email": "one@example.com", "password": "Password123!"}
+    credentials = {"email": "one@aiml.suh.edu.in", "password": "Password123!"}
 
     assert (
         client.post(P + "/auth/login", json={**credentials, "password": "wrong"}).status_code == 401

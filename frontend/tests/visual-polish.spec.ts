@@ -21,7 +21,7 @@ async function uploadMaterial(request: APIRequestContext, headers: Record<string
 
 test('realistic crowded content stays readable on desktop and mobile', async ({ page }, testInfo) => {
   const registered = await page.request.post('/api/v1/auth/register', {
-    data: { full_name: 'Responsive Layout Student', email: `visual-${Date.now()}@example.com`, password: 'Password123!' },
+    data: { full_name: 'Responsive Layout Student', email: `visual-${Date.now()}@aiml.suh.edu.in`, password: 'Password123!' },
   })
   expect(registered.status()).toBe(201)
   const { access_token: token } = await registered.json()
