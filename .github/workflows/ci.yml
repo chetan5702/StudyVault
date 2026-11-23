@@ -57,7 +57,7 @@ jobs:
           python -m alembic downgrade 0007_public_limits_and_membership
           python -m alembic upgrade head
           python -m alembic check
-          python -c "from sqlalchemy import create_engine,text; from app.config import get_settings; e=create_engine(get_settings().database_url); c=e.connect(); assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '0008_academic_cohorts'; assert c.execute(text(\"SELECT count(*) FROM departments WHERE code='CSE'\")).scalar_one() == 1; c.close(); e.dispose()"
+          python -c "from sqlalchemy import create_engine,text; from app.config import get_settings; e=create_engine(get_settings().database_url); c=e.connect(); assert c.execute(text('SELECT version_num FROM alembic_version')).scalar_one() == '0009_verified_enrollments'; assert c.execute(text(\"SELECT count(*) FROM departments WHERE code='CSE'\")).scalar_one() == 1; c.close(); e.dispose()"
 
   postgres_migrations:
     runs-on: ubuntu-latest

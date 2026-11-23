@@ -89,7 +89,7 @@ class ProfileUpdate(BaseModel):
     course_id: str | None = None
     year_of_study: int | None = Field(default=None, ge=1, le=4)
     academic_year: str | None = Field(default=None, max_length=20)
-    semester: int | None = Field(default=None, ge=1, le=20)
+    semester: int | None = Field(default=None, ge=1, le=8)
     section: str | None = None
     phone_number: str | None = Field(default=None, max_length=25)
     avatar_url: str | None = None
@@ -116,6 +116,16 @@ class ProfileOut(BaseModel):
     avatar_url: str | None = None
     bio: str | None = None
 
+
+
+class VerifiedEnrollmentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    course_id: str
+    semester: int
+    academic_session: str
+    verification_source: Literal["university", "admin", "development"]
+    verified_at: datetime
 
 
 class AcademicSubjectOut(BaseModel):

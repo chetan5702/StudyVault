@@ -7,6 +7,7 @@ from app.models import (
     College,
     Course,
     Department,
+    VerifiedEnrollment,
 )
 
 P = "/api/v1"
@@ -50,6 +51,7 @@ def test_academic_profile_requires_consistent_college_department_branch_year(cli
     branches = client.get(P + "/courses", params={"department_id": department}).json()
     assert {c["id"] for c in branches} == {aiml, ds}
 
+    assert client.patch(P + "/profile/me", headers=student, json={"semester": 9}).status_code == 422
     initial = client.put(
         P + "/profile/me",
         headers=student,
@@ -131,6 +133,7 @@ def test_published_materials_filtered_by_course_semester_and_session(client, stu
     assert client.get(P + "/academic/subjects", headers=student).json() == []
     assert client.get(P + "/academic/resources", headers=student).json() == []
 
+    user_id = client.get(P + "/auth/me", headers=student).json()["id"]
     selected = client.put(
         P + "/profile/me", headers=student,
         json={
@@ -139,6 +142,12 @@ def test_published_materials_filtered_by_course_semester_and_session(client, stu
         },
     )
     assert selected.status_code == 200, selected.text
+    assert client.get(P + "/academic/subjects", headers=student).json() == []
+    assert client.get(P + "/academic/resources", headers=student).json() == []
+    with SessionLocal() as db:
+        db.add(VerifiedEnrollment(user_id=user_id, course_id=aiml, semester=4,
+            academic_session="2026-27", verification_source="development"))
+        db.commit()
     subjects_response = client.get(P + "/academic/subjects", headers=student)
     assert subjects_response.status_code == 200
     assert [s["code"] for s in subjects_response.json()] == ["OS"]
@@ -153,12 +162,14 @@ def test_published_materials_filtered_by_course_semester_and_session(client, stu
         P + "/profile/me", headers=student, json={"course_id": ds}
     )
     assert switched.status_code == 200, switched.text
-    assert [s["code"] for s in client.get(P + "/academic/subjects", headers=student).json()] == ["DATA"]
+    assert [s["code"] for s in client.get(P + "/academic/subjects", headers=student).json()] == ["OS"]
     assert {r["title"] for r in client.get(P + "/academic/resources", headers=student).json()} == {
-        "Another branch"
+        "OS Unit 2", "OS 2026-27"
     }
 
 
 def test_academic_resources_require_authentication(client):
+    assert client.get(P + "/academic/enrollment").status_code == 401
+
     assert client.get(P + "/academic/subjects").status_code == 401
     assert client.get(P + "/academic/resources").status_code == 401

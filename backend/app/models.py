@@ -180,6 +180,27 @@ class Profile(Base):
     course = relationship("Course", back_populates="profiles")
 
 
+class VerifiedEnrollment(Base):
+    """Trusted academic entitlement; never derived from editable Profile."""
+
+    __tablename__ = "verified_enrollments"
+    __table_args__ = (
+        CheckConstraint("semester BETWEEN 1 AND 8", name="ck_verified_enrollment_semester"),
+        CheckConstraint(
+            "verification_source IN ('university', 'admin', 'development')",
+            name="ck_verified_enrollment_source",
+        ),
+    )
+
+    user_id = Column(String, ForeignKey("users.id"), primary_key=True)
+    course_id = Column(String, ForeignKey("courses.id"), nullable=False)
+    semester = Column(Integer, nullable=False)
+    academic_session = Column(String(20), nullable=False)
+    verification_source = Column(String(20), nullable=False)
+    verified_at = Column(UTCDateTime, nullable=False, default=utcnow)
+    created_at = Column(UTCDateTime, nullable=True, default=utcnow)
+
+
 class Subject(Base):
     __tablename__ = "subjects"
 
