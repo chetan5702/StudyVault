@@ -389,7 +389,6 @@ function ProfilePage() {
   const [chosenCourse, setCourse] = useState<string | null>(null)
   const [chosenYear, setYear] = useState<number | null>(null)
   const [chosenSemester, setSemester] = useState<number | null>(null)
-  const [saveError, setSaveError] = useState('')
   const [saved, setSaved] = useState(false)
 
   const college = chosenCollege ?? data?.college_id ?? ''
@@ -401,25 +400,23 @@ function ProfilePage() {
   const filteredCourses = (courses.data || []).filter(c => c.college_id === college && c.department_id === department)
 
   return <><Heading title="Academic profile" subtitle="Choose your department, branch and semester to personalize your academic library." />
-    <ErrorMessage message={error || colleges.error || departments.error || courses.error || saveError} />
+    <ErrorMessage message={error || colleges.error || departments.error || courses.error} />
     {saved && <p className="success">Academic profile saved.</p>}
     {loading ? <LoadingState label="Loading profile…" /> : data && <div className="profile-layout">
       <Panel title="Your academic details">
         <AsyncForm key={JSON.stringify(data)} label="Save academic profile" onSubmit={async d => {
-          setSaveError(''); setSaved(false)
-          try {
-            await post('/profile/me', {
-              college_id: college || null,
-              department_id: department || null,
-              course_id: course || null,
-              year_of_study: year,
-              semester,
-              academic_year: String(d.get('academic_year') || '').trim() || null,
-              section: String(d.get('section') || '').trim() || null,
-              phone_number: String(d.get('phone_number') || '').trim() || null,
-            }, 'PUT')
-            setSaved(true); reload()
-          } catch (e) { setSaveError((e as Error).message) }
+          setSaved(false)
+          await post('/profile/me', {
+            college_id: college || null,
+            department_id: department || null,
+            course_id: course || null,
+            year_of_study: year,
+            semester,
+            academic_year: String(d.get('academic_year') || '').trim() || null,
+            section: String(d.get('section') || '').trim() || null,
+            phone_number: String(d.get('phone_number') || '').trim() || null,
+          }, 'PUT')
+          setSaved(true); reload()
         }}>
           <Field label="University"><select value={college} onChange={e => { setCollege(e.target.value); setDepartment(''); setCourse(''); setSaved(false) }}>
             <option value="">Select university</option>
