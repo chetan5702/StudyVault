@@ -6,7 +6,7 @@ export type Department = { id: string; college_id: string; code: string; name: s
 export type Course = { id: string; college_id: string; department_id: string | null; name: string; degree: string | null }
 export type VerifiedEnrollment = { course_id: string; semester: number; academic_session: string; verification_source: 'university' | 'admin' | 'development'; verified_at: string }
 export type AcademicSubject = { id: string; course_id: string; semester: number; code: string; name: string }
-export type AcademicResource = { id: string; subject_id: string; subject_code: string; subject_name: string; semester: number; title: string; url: string; category: string; source_label: string | null; unit_number: number | null; unit_title: string | null; academic_session: string | null }
+export type AcademicResource = { id: string; subject_id: string; subject_code: string; subject_name: string; semester: number; title: string; url: string | null; file_name: string | null; download_url: string | null; category: string; source_label: string | null; unit_number: number | null; unit_title: string | null; academic_session: string | null }
 export type Material = { id: string; user_id: string; title: string; file_name: string; size_bytes: number; mime_type: string; subject_id: string; unit_id: string | null; category: string; visibility: string; created_at: string }
 export type Exam = { id: string; title: string; subject_id: string; exam_type: string; scheduled_for: string; location: string | null; timezone: string }
 export type Notification = { id: string; exam_id: string | null; title: string; message: string; scheduled_for: string; delivered_at: string | null; read_at: string | null }
@@ -61,4 +61,43 @@ export async function download(material: Material) {
   const anchor = document.createElement('a')
   anchor.href = url; anchor.download = material.file_name; anchor.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+
+export type StaffRole = { role: 'admin' | 'faculty' | null }
+export type FacultyPerson = { id: string; full_name: string; email: string }
+export type FacultyAssignment = { faculty_id: string; subject_id: string }
+export type FacultyResource = { id: string; subject_id: string; title: string; category: string; unit_number: number | null; unit_title: string | null; academic_session: string | null; is_published: boolean; file_name: string | null; size_bytes: number | null }
+
+export async function uploadStaffResource(subjectId: string, fields: FormData): Promise<FacultyResource> {
+  const params = new URLSearchParams()
+  params.set('subject_id', subjectId)
+  for (const name of ['title', 'category', 'unit_number', 'unit_title', 'academic_session']) {
+    const field = fields.get(name)
+    if (field && String(field).trim()) params.set(name, String(field).trim())
+  }
+  const file = fields.get('file')
+  if (!(file instanceof File) || file.size === 0) throw new Error('Select a document to upload.')
+  const body = new FormData()
+  body.set('file', file)
+  return request<FacultyResource>('/staff/resources/upload?' + params, { method: 'POST', body })
+}
+
+export async function downloadAcademicResource(resource: AcademicResource): Promise<void> {
+  if (!resource.download_url || !resource.file_name) throw new Error('Resource is not downloadable.')
+  const token = session.token()
+  const response = await fetch(base + resource.download_url, {
+    headers: token ? { Authorization: 'Bearer ' + token } : {},
+  })
+  if (response.status === 401) expireSession(token)
+  if (!response.ok) throw new Error('Resource access denied or file unavailable.')
+  const url = URL.createObjectURL(await response.blob())
+  try {
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = resource.file_name
+    anchor.click()
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
 }
