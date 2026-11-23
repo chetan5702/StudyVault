@@ -7,6 +7,7 @@ files exist.
 """
 
 import sqlalchemy as sa
+
 from alembic import op
 
 revision = "0010_faculty_admin_publishing"

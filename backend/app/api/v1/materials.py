@@ -10,7 +10,15 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.config import get_settings
 from app.database import get_db
-from app.models import AcademicResource, ClassMember, Material, Subject, Unit, User, UserStorageUsage
+from app.models import (
+    AcademicResource,
+    ClassMember,
+    Material,
+    Subject,
+    Unit,
+    User,
+    UserStorageUsage,
+)
 from app.object_storage import delete_stored_file, download_stored_file, upload_validated_file
 from app.schemas import MaterialCreate, MaterialOut
 from app.storage import save_upload
