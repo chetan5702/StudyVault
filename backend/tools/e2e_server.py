@@ -45,7 +45,9 @@ with tempfile.TemporaryDirectory(prefix="studyvault-browser-", ignore_cleanup_er
     # harness, never in app.main or in a real StudyVault deployment. All
     # accounts and enrollments provisioned here are synthetic.
     from typing import Literal
+
     from fastapi import status
+
     from app.database import SessionLocal
     from app.models import Course, StaffRole, User, VerifiedEnrollment
 
