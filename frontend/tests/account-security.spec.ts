@@ -91,3 +91,33 @@ test('verification link exchanges its token and starts the verified session', as
   await expect(page.getByRole('heading', { name: 'Academic profile' })).toBeVisible()
   expect(await page.evaluate(() => sessionStorage.getItem('studyvault.token'))).toBe('verified-session')
 })
+
+test('password visibility toggle keeps the typed value on login and registration', async ({ page }) => {
+  for (const url of ['/login', '/register']) {
+    await page.goto(url)
+    const input = page.getByLabel('Password', { exact: true })
+    await input.fill('TypedPassword123!')
+    await expect(input).toHaveAttribute('type', 'password')
+    await page.getByRole('button', { name: 'Show password' }).click()
+    await expect(input).toHaveAttribute('type', 'text')
+    await expect(input).toHaveValue('TypedPassword123!')
+    await page.getByRole('button', { name: 'Hide password' }).click()
+    await expect(input).toHaveAttribute('type', 'password')
+    await expect(input).toHaveValue('TypedPassword123!')
+  }
+})
+
+test('password reset controls can reveal fields independently', async ({ page }) => {
+  await page.goto('/reset-password?token=example')
+  const current = page.getByLabel('New password', { exact: true })
+  const confirmation = page.getByLabel('Confirm new password')
+  await current.fill('NewPassword123!')
+  await confirmation.fill('NewPassword123!')
+  await page.getByRole('button', { name: 'Show new password', exact: true }).click()
+  await expect(current).toHaveAttribute('type', 'text')
+  await expect(confirmation).toHaveAttribute('type', 'password')
+  await expect(current).toHaveValue('NewPassword123!')
+  await page.getByRole('button', { name: 'Show confirm new password' }).click()
+  await expect(confirmation).toHaveAttribute('type', 'text')
+  await expect(confirmation).toHaveValue('NewPassword123!')
+})
