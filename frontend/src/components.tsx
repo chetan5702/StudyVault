@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode, type FormEvent } from 'react'
+import { useEffect, useId, useState, type ReactNode, type FormEvent } from 'react'
 import { Icon } from './icons'
 
 export function Panel({ children, title }: { children: ReactNode; title?: string }) {
@@ -6,6 +6,17 @@ export function Panel({ children, title }: { children: ReactNode; title?: string
 }
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return <label className="field"><span>{label}</span>{children}</label>
+}
+export function PasswordField({ label, name, autoComplete, minLength, maxLength = 72 }: { label: string; name: string; autoComplete: string; minLength?: number; maxLength?: number }) {
+  const [visible, setVisible] = useState(false)
+  const id = useId()
+  return <div className="field">
+    <label htmlFor={id}>{label}</label>
+    <div className="password-input-group">
+      <input id={id} name={name} type={visible ? 'text' : 'password'} autoComplete={autoComplete} required minLength={minLength} maxLength={maxLength} />
+      <button className="password-toggle" type="button" aria-label={`${visible ? 'Hide' : 'Show'} ${label.toLowerCase()}`} aria-pressed={visible} onClick={() => setVisible(value => !value)}>{visible ? 'Hide' : 'Show'}</button>
+    </div>
+  </div>
 }
 export function Empty({ children }: { children: ReactNode }) {
   return <div className="empty">{children}</div>

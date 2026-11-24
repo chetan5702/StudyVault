@@ -10,7 +10,15 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.config import get_settings
 from app.database import get_db
-from app.models import ClassMember, Material, Subject, Unit, User, UserStorageUsage
+from app.models import (
+    AcademicResource,
+    ClassMember,
+    Material,
+    Subject,
+    Unit,
+    User,
+    UserStorageUsage,
+)
 from app.object_storage import delete_stored_file, download_stored_file, upload_validated_file
 from app.schemas import MaterialCreate, MaterialOut
 from app.storage import save_upload
@@ -44,7 +52,19 @@ def owned_storage_bytes(db: Session, user_id: str) -> int:
         .filter(Material.user_id == user_id)
         .scalar()
     )
-    return int(stored or 0)
+    academic_stored = (
+        db.query(
+            func.coalesce(
+                func.sum(
+                    case((AcademicResource.size_bytes > 0, AcademicResource.size_bytes), else_=0)
+                ),
+                0,
+            )
+        )
+        .filter(AcademicResource.uploaded_by_id == user_id)
+        .scalar()
+    )
+    return int(stored or 0) + int(academic_stored or 0)
 
 
 def ensure_storage_usage_row(db: Session, user_id: str) -> None:

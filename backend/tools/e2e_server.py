@@ -41,6 +41,51 @@ with tempfile.TemporaryDirectory(prefix="studyvault-browser-", ignore_cleanup_er
     class WorkerRequest(BaseModel):
         now: AwareDatetime
 
+    # Test-only privileged setup routes exist ONLY in this disposable browser
+    # harness, never in app.main or in a real StudyVault deployment. All
+    # accounts and enrollments provisioned here are synthetic.
+    from typing import Literal
+
+    from fastapi import status
+
+    from app.database import SessionLocal
+    from app.models import Course, StaffRole, User, VerifiedEnrollment
+
+    class FictionalRole(BaseModel):
+        user_id: str
+        role: Literal["admin", "faculty"]
+
+    class FictionalEnrollment(BaseModel):
+        user_id: str
+        course_id: str
+        semester: int
+        academic_session: str
+
+    @app.post("/__test__/fixtures/staff-role", status_code=status.HTTP_204_NO_CONTENT)
+    def grant_fictional_staff_role(payload: FictionalRole):
+        with SessionLocal() as db:
+            user = db.get(User, payload.user_id)
+            if user is None or user.email_verified_at is None:
+                raise HTTPException(404, "Fictional user not available")
+            if db.get(StaffRole, user.id) is not None:
+                raise HTTPException(409, "Fictional role exists")
+            db.add(StaffRole(user_id=user.id, role=payload.role))
+            db.commit()
+
+    @app.post("/__test__/fixtures/enrollment", status_code=status.HTTP_204_NO_CONTENT)
+    def provision_fictional_enrollment(payload: FictionalEnrollment):
+        with SessionLocal() as db:
+            if db.get(User, payload.user_id) is None or db.get(Course, payload.course_id) is None:
+                raise HTTPException(404, "Fictional student or program missing")
+            if db.get(VerifiedEnrollment, payload.user_id) is not None:
+                raise HTTPException(409, "Fictional enrollment exists")
+            db.add(VerifiedEnrollment(
+                user_id=payload.user_id, course_id=payload.course_id,
+                semester=payload.semester, academic_session=payload.academic_session,
+                verification_source="development",
+            ))
+            db.commit()
+
     # This test-only route is registered solely by this disposable harness.
     # It launches the actual worker executable; production app has no clock override route.
     @app.post("/__test__/reminders/run")

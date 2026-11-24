@@ -144,8 +144,10 @@ class AcademicResourceOut(BaseModel):
     subject_name: str
     semester: int
     title: str
-    url: str
+    url: str | None
     category: str
+    file_name: str | None = None
+    download_url: str | None = None
     source_label: str | None = None
     unit_number: int | None = None
     unit_title: str | None = None

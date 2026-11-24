@@ -50,7 +50,7 @@ test('resend verification, password request, and password reset use the public a
 
   await page.goto('/reset-password?token=reset-token')
   await page.getByLabel('New password', { exact: true }).fill('NewPassword123!')
-  await page.getByLabel('Confirm new password').fill('different-password')
+  await page.getByLabel('Confirm new password', { exact: true }).fill('different-password')
   await page.getByRole('button', { name: 'Update password' }).click()
   await expect(page.getByText('Passwords do not match.')).toBeVisible()
 
@@ -58,7 +58,7 @@ test('resend verification, password request, and password reset use the public a
     expect(route.request().postDataJSON()).toEqual({ token: 'reset-token', new_password: 'NewPassword123!' })
     await route.fulfill({ json: { message: 'Your password has been reset.' } })
   })
-  await page.getByLabel('Confirm new password').fill('NewPassword123!')
+  await page.getByLabel('Confirm new password', { exact: true }).fill('NewPassword123!')
   await page.getByRole('button', { name: 'Update password' }).click()
   await expect(page).toHaveURL('/reset-password')
   await expect(page.getByRole('heading', { name: 'Password updated' })).toBeVisible()
@@ -77,6 +77,11 @@ test('verification link exchanges its token and starts the verified session', as
       await route.fulfill({ json: [] })
     } else if (path.endsWith('/notifications')) {
       await route.fulfill({ json: { items: [], unread_count: 0 } })
+    } else if (path.endsWith('/staff/me')) {
+      // Newly logged-in mocked student has no staff role. Without this mock
+      // the real API correctly rejects the fake bearer token with 401,
+      // which ends the synthetic browser session.
+      await route.fulfill({ json: { role: null } })
     } else {
       await route.continue()
     }
@@ -85,4 +90,34 @@ test('verification link exchanges its token and starts the verified session', as
   await expect(page).toHaveURL('/profile')
   await expect(page.getByRole('heading', { name: 'Academic profile' })).toBeVisible()
   expect(await page.evaluate(() => sessionStorage.getItem('studyvault.token'))).toBe('verified-session')
+})
+
+test('password visibility toggle keeps the typed value on login and registration', async ({ page }) => {
+  for (const url of ['/login', '/register']) {
+    await page.goto(url)
+    const input = page.getByLabel('Password', { exact: true })
+    await input.fill('TypedPassword123!')
+    await expect(input).toHaveAttribute('type', 'password')
+    await page.getByRole('button', { name: 'Show password' }).click()
+    await expect(input).toHaveAttribute('type', 'text')
+    await expect(input).toHaveValue('TypedPassword123!')
+    await page.getByRole('button', { name: 'Hide password' }).click()
+    await expect(input).toHaveAttribute('type', 'password')
+    await expect(input).toHaveValue('TypedPassword123!')
+  }
+})
+
+test('password reset controls can reveal fields independently', async ({ page }) => {
+  await page.goto('/reset-password?token=example')
+  const current = page.getByLabel('New password', { exact: true })
+  const confirmation = page.getByLabel('Confirm new password', { exact: true })
+  await current.fill('NewPassword123!')
+  await confirmation.fill('NewPassword123!')
+  await page.getByRole('button', { name: 'Show new password', exact: true }).click()
+  await expect(current).toHaveAttribute('type', 'text')
+  await expect(confirmation).toHaveAttribute('type', 'password')
+  await expect(current).toHaveValue('NewPassword123!')
+  await page.getByRole('button', { name: 'Show confirm new password' }).click()
+  await expect(confirmation).toHaveAttribute('type', 'text')
+  await expect(confirmation).toHaveValue('NewPassword123!')
 })
