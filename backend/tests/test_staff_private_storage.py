@@ -9,7 +9,7 @@ from app import object_storage
 from app.api.v1 import staff
 from app.database import SessionLocal
 from app.models import AcademicResource, StaffRole, UserStorageUsage
-from tests.test_staff_publishing import account, academic_programs, admin_credential
+from tests.test_staff_publishing import academic_programs, account, admin_credential
 
 API = "/api/v1"
 
