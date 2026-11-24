@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { BrowserRouter, NavLink, Navigate, Outlet, Route, Routes, Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { request, post, session, download, type User, type StaffRole, type AuthResult, type Subject, type Unit, type Material, type Profile, type Department, type Course, type Dashboard, type Exam } from './api'
-import { Panel, Field, Empty, ErrorMessage, AsyncForm, Countdown, LoadingState } from './components'
+import { Panel, Field, PasswordField, Empty, ErrorMessage, AsyncForm, Countdown, LoadingState } from './components'
 import { useData } from './hooks'
 import { ExamsPage } from './Exams'
 import { AcademicLibraryPage } from './AcademicLibrary'
@@ -51,7 +51,7 @@ function AuthPage({ register = false }: { register?: boolean }) {
       return
     }
     auth.login(result); navigate(register ? '/profile' : '/')
-  }}>{register && <><Field label="Full name"><input name="name" autoComplete="name" required maxLength={120} /></Field><PhoneField helpId="registration-phone-help" /></>}<Field label="Email address"><input name="email" type="email" autoComplete="email" placeholder={register ? "student@aiml.suh.edu.in" : undefined} required /></Field>{register && <p className="muted text-sm">New accounts require an official SUH email: @suh.edu.in or a department address such as @aiml.suh.edu.in, @cse.suh.edu.in or @ds.suh.edu.in. Verify the email link to activate your account. Existing accounts can still log in.</p>}<Field label="Password"><input name="password" type="password" autoComplete={register ? 'new-password' : 'current-password'} required minLength={register ? 8 : undefined} maxLength={72} /></Field>{register && <p className="muted text-sm">Use at least 8 characters, up to 72 UTF-8 bytes.</p>}</AsyncForm>{!register && <p className="auth-secondary-link"><Link to="/forgot-password">Forgot your password?</Link></p>}<p className="auth-switch">{register ? 'Already have an account?' : 'New to StudyVault?'} <Link to={register ? '/login' : '/register'}>{register ? 'Log in' : 'Create an account'}</Link></p></div></main>
+  }}>{register && <><Field label="Full name"><input name="name" autoComplete="name" required maxLength={120} /></Field><PhoneField helpId="registration-phone-help" /></>}<Field label="Email address"><input name="email" type="email" autoComplete="email" placeholder={register ? "student@aiml.suh.edu.in" : undefined} required /></Field>{register && <p className="muted text-sm">New accounts require an official SUH email: @suh.edu.in or a department address such as @aiml.suh.edu.in, @cse.suh.edu.in or @ds.suh.edu.in. Verify the email link to activate your account. Existing accounts can still log in.</p>}<PasswordField label="Password" name="password" autoComplete={register ? 'new-password' : 'current-password'} minLength={register ? 8 : undefined} />{register && <p className="muted text-sm">Use at least 8 characters, up to 72 UTF-8 bytes.</p>}</AsyncForm>{!register && <p className="auth-secondary-link"><Link to="/forgot-password">Forgot your password?</Link></p>}<p className="auth-switch">{register ? 'Already have an account?' : 'New to StudyVault?'} <Link to={register ? '/login' : '/register'}>{register ? 'Log in' : 'Create an account'}</Link></p></div></main>
 }
 
 function PhoneField({ defaultValue = '', helpId }: { defaultValue?: string; helpId: string }) {
@@ -135,7 +135,7 @@ function ResetPasswordPage() {
       const result = await post<MessageResponse>('/auth/confirm-password-reset', { token, new_password: password })
       setMessage(result.message)
       navigate('/reset-password', { replace: true })
-    }}><Field label="New password"><input name="password" type="password" autoComplete="new-password" required minLength={8} maxLength={72} /></Field><Field label="Confirm new password"><input name="password_confirmation" type="password" autoComplete="new-password" required minLength={8} maxLength={72} /></Field></AsyncForm>}
+    }}><PasswordField label="New password" name="password" autoComplete="new-password" minLength={8} /><PasswordField label="Confirm new password" name="password_confirmation" autoComplete="new-password" minLength={8} /></AsyncForm>}
     <p className="auth-switch"><Link to="/login">Back to login</Link></p>
   </PublicAccountPage>
 }
