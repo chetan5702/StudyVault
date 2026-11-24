@@ -50,7 +50,7 @@ test('resend verification, password request, and password reset use the public a
 
   await page.goto('/reset-password?token=reset-token')
   await page.getByLabel('New password', { exact: true }).fill('NewPassword123!')
-  await page.getByLabel('Confirm new password').fill('different-password')
+  await page.getByLabel('Confirm new password', { exact: true }).fill('different-password')
   await page.getByRole('button', { name: 'Update password' }).click()
   await expect(page.getByText('Passwords do not match.')).toBeVisible()
 
@@ -58,7 +58,7 @@ test('resend verification, password request, and password reset use the public a
     expect(route.request().postDataJSON()).toEqual({ token: 'reset-token', new_password: 'NewPassword123!' })
     await route.fulfill({ json: { message: 'Your password has been reset.' } })
   })
-  await page.getByLabel('Confirm new password').fill('NewPassword123!')
+  await page.getByLabel('Confirm new password', { exact: true }).fill('NewPassword123!')
   await page.getByRole('button', { name: 'Update password' }).click()
   await expect(page).toHaveURL('/reset-password')
   await expect(page.getByRole('heading', { name: 'Password updated' })).toBeVisible()
@@ -110,7 +110,7 @@ test('password visibility toggle keeps the typed value on login and registration
 test('password reset controls can reveal fields independently', async ({ page }) => {
   await page.goto('/reset-password?token=example')
   const current = page.getByLabel('New password', { exact: true })
-  const confirmation = page.getByLabel('Confirm new password')
+  const confirmation = page.getByLabel('Confirm new password', { exact: true })
   await current.fill('NewPassword123!')
   await confirmation.fill('NewPassword123!')
   await page.getByRole('button', { name: 'Show new password', exact: true }).click()
