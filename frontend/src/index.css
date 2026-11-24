@@ -428,3 +428,27 @@
 .academic-resource .secondary-button, .academic-library .page-heading .secondary-button { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; }
 @media (max-width: 900px) { .academic-context { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 600px) { .academic-context,.academic-filters { grid-template-columns: 1fr; } .academic-resource { align-items: start; flex-direction: column; } }
+
+/* Password visibility controls shared by sign-in, registration, and reset forms. */
+@layer components {
+  .password-input-group { position: relative; }
+  .password-input-group input { display: block; width: 100%; padding-right: 78px; }
+  .password-toggle {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    min-width: 65px;
+    min-height: 34px;
+    padding: 4px 8px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #246653;
+    font-size: .83rem;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .password-toggle:hover { background: #e9f1eb; }
+  .password-toggle:focus-visible { outline: 2px solid #246653; outline-offset: 1px; }
+}
